@@ -13,6 +13,14 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+
+Route::get('/admin/tableau_bord', function () {
+    return view('admin.tableau_bord');
+})->name('admin.tableau_bord');
+
+Route::get('/etudiant/tableau_bord', function () {
+    return view('etudiant.tableau_bord');
+})->name('etudiant.tableau_bord');
+
+Route::get('/enseignant/tableau_bord', function () { return view('enseignant.tableau_bord'); });
+Route::get('/departement/tableau_bord', function () { return view('departement.tableau_bord'); });
