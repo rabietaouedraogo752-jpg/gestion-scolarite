@@ -29,7 +29,7 @@
                     <a href="#" class="nav-link active"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link"><i class="bi bi-people me-2"></i> Étudiants</a>
+                    <a href="{{ route('gestion.liste_etudiant') }}" class="nav-link"><i class="bi bi-people me-2"></i> Étudiants</a>
                 </li>
                 <li>
                     <a href="#" class="nav-link"><i class="bi bi-person-badge me-2"></i> Enseignants</a>
@@ -61,7 +61,7 @@
 
             <div class="row g-3 mb-4">
                 <div class="col-sm-6 col-xl-3">
-                    <a href="#" class="card-stat-link">
+                    <a href="/gestion/liste_etudiant" class="card-stat-link">
                         <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
                             <div>
                                 <h6 class="text-muted small text-uppercase">Étudiants</h6>
@@ -73,7 +73,7 @@
                 </div>
                 
                 <div class="col-sm-6 col-xl-3">
-                    <a href="#" class="card-stat-link">
+                    <a href="{{ route('gestion.liste_enseignant') }}" class="card-stat-link">
                         <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
                             <div>
                                 <h6 class="text-muted small text-uppercase">Enseignants</h6>
@@ -85,7 +85,7 @@
                 </div>
                 
                 <div class="col-sm-6 col-xl-3">
-                    <a href="#" class="card-stat-link">
+                    <a href="{{ route('gestion.liste_departement') }}" class="card-stat-link">
                         <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
                             <div>
                                 <h6 class="text-muted small text-uppercase">Départements</h6>
