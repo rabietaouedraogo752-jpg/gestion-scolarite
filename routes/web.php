@@ -24,3 +24,5 @@ Route::get('/etudiant/tableau_bord', function () {
 
 Route::get('/enseignant/tableau_bord', function () { return view('enseignant.tableau_bord'); });
 Route::get('/departement/tableau_bord', function () { return view('departement.tableau_bord'); });
+Route::get('/admin/compte', function () { return view('admin.compte'); 
+});

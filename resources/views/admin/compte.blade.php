@@ -11,11 +11,7 @@
         .sidebar { min-height: 100vh; background-color: #1e293b; color: white; }
         .sidebar .nav-link { color: #94a3b8; }
         .sidebar .nav-link:hover, .sidebar .nav-link.active { color: white; background-color: #334155; border-radius: 8px; }
-        .card-stat { border: none; border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s; }
-        
-        /* Style pour rendre les cartes de statistiques cliquables proprement */
-        .card-stat-link { text-decoration: none; color: inherit; display: block; }
-        .card-stat-link:hover .card-stat { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important; }
+        .card-stat { border: none; border-radius: 12px; }
     </style>
 </head>
 <body>
@@ -25,9 +21,7 @@
         <div class="col-md-3 col-lg-2 sidebar p-3 d-flex flex-column">
             <h5 class="text-center fw-bold py-3 border-bottom border-secondary">Scolarité Admin</h5>
             <ul class="nav nav-pills flex-column mb-auto mt-3 gap-2">
-                <li class="nav-item">
-                    <a href="#" class="nav-link active"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
-                </li>
+                
                 <li>
                     <a href="#" class="nav-link"><i class="bi bi-people me-2"></i> Étudiants</a>
                 </li>
@@ -35,11 +29,9 @@
                     <a href="#" class="nav-link"><i class="bi bi-person-badge me-2"></i> Enseignants</a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link"><i class="bi bi-building me-2"></i> Départements</a>
+                    <a href="#" class="nav-link"><i class="bi bi-building me-2"></i>  Chef de départements</a>
                 </li>
-                <li>
-                    <a href="#" class="nav-link"><i class="bi bi-journal-text me-2"></i> Examens & Notes</a>
-                </li>
+                
             </ul>
             
             <div class="border-top border-secondary pt-3">
@@ -53,59 +45,45 @@
                     <h2 class="fw-bold mb-0">Tableau de bord</h2>
                     <p class="text-muted small mb-0">Bienvenue sur votre espace de gestion pédagogique</p>
                 </div>
-                <a href="{{ url('/admin/vu_compte') }}" class="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-sm fw-semibold text-decoration-none">
-                    <i class="bi bi-person-gear fs-5"></i>
-                    <span>Gestion de comptes</span>
-                </a>            
+                           
             </div>
 
             <div class="row g-3 mb-4">
                 <div class="col-sm-6 col-xl-3">
-                    <a href="#" class="card-stat-link">
-                        <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
-                            <div>
-                                <h6 class="text-muted small text-uppercase">Étudiants</h6>
-                                <h3 class="fw-bold mb-0">1,245</h3>
-                            </div>
-                            <div class="fs-1 text-primary"><i class="bi bi-people-fill"></i></div>
+                    <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
+                        <div>
+                            <h6 class="text-muted small text-uppercase">Étudiants</h6>
+                            <h3 class="fw-bold mb-0">1,245</h3>
                         </div>
-                    </a>
+                        <div class="fs-1 text-primary"><i class="bi bi-people-fill"></i></div>
+                    </div>
                 </div>
-                
                 <div class="col-sm-6 col-xl-3">
-                    <a href="#" class="card-stat-link">
-                        <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
-                            <div>
-                                <h6 class="text-muted small text-uppercase">Enseignants</h6>
-                                <h3 class="fw-bold mb-0">84</h3>
-                            </div>
-                            <div class="fs-1 text-success"><i class="bi bi-person-badge-fill"></i></div>
+                    <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
+                        <div>
+                            <h6 class="text-muted small text-uppercase">Enseignants</h6>
+                            <h3 class="fw-bold mb-0">84</h3>
                         </div>
-                    </a>
+                        <div class="fs-1 text-success"><i class="bi bi-person-badge-fill"></i></div>
+                    </div>
                 </div>
-                
                 <div class="col-sm-6 col-xl-3">
-                    <a href="#" class="card-stat-link">
-                        <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
-                            <div>
-                                <h6 class="text-muted small text-uppercase">Départements</h6>
-                                <h3 class="fw-bold mb-0">6</h3>
-                            </div>
-                            <div class="fs-1 text-warning"><i class="bi bi-building-fill"></i></div>
+                    <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
+                        <div>
+                            <h6 class="text-muted small text-uppercase">Départements</h6>
+                            <h3 class="fw-bold mb-0">6</h3>
                         </div>
-                    </a>
+                        <div class="fs-1 text-warning"><i class="bi bi-building-fill"></i></div>
+                    </div>
                 </div>
-                
                 <div class="col-sm-6 col-xl-3">
-                    <a href="#" class="card-stat-link">
-                        <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
-                            <div>
-                                <h6 class="text-muted small text-uppercase">Inscriptions en attente</h6>
-                                <h3 class="fw-bold mb-0 text-danger">12</h3>
-                            </div>
-                            <div class="fs-1 text-danger"><i class="bi bi-exclamation-circle-fill"></i></div>
+                    <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
+                        <div>
+                            <h6 class="text-muted small text-uppercase">Inscriptions en attente</h6>
+                            <h3 class="fw-bold mb-0 text-danger">12</h3>
                         </div>
-                    </a>
+                        <div class="fs-1 text-danger"><i class="bi bi-exclamation-circle-fill"></i></div>
+                    </div>
                 </div>
             </div>
 
