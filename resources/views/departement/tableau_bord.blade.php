@@ -28,9 +28,118 @@
         </div>
     </nav>
 
-    <div class="container mt-4 mb-5">
-        <div class="row g-4">
-            
+    <div class="container-fluid">
+    <div class="row">
+        <!-- SIDEBAR -->
+<div class="col-md-3 col-lg-2 bg-dark text-white vh-100 p-3">
+
+    <h4 class="fw-bold mb-4">
+        <i class="bi bi-shield-shaded"></i>
+        Chef Dépt.
+    </h4>
+
+    <ul class="nav flex-column">
+
+        <li class="nav-item mb-2">
+            <a class="nav-link text-white" href="#">
+                <i class="bi bi-house-door me-2"></i>
+                Tableau de bord
+            </a>
+        </li>
+
+        <li class="nav-item mb-2">
+            <a class="nav-link text-white" href="#">
+                <i class="bi bi-people me-2"></i>
+                Enseignants
+            </a>
+        </li>
+
+        <li class="nav-item mb-2">
+            <a class="nav-link text-white" href="#">
+                <i class="bi bi-book me-2"></i>
+                Enseignements
+            </a>
+        </li>
+
+        <li class="nav-item mb-2">
+            <a class="nav-link text-white" href="#">
+                <i class="bi bi-clipboard-check me-2"></i>
+                Vacations
+            </a>
+        </li>
+
+        <li class="nav-item mb-2">
+            <a class="nav-link text-white" href="#">
+                <i class="bi bi-bar-chart me-2"></i>
+                Évaluations
+            </a>
+        </li>
+
+        <li class="nav-item mb-2">
+            <a class="nav-link text-white" href="#">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                Rapports
+            </a>
+        </li>
+
+        <li class="nav-item mb-2">
+            <a class="nav-link text-white" href="#">
+                <i class="bi bi-person-circle me-2"></i>
+                Mon profil
+            </a>
+        </li>
+
+        <li class="nav-item mt-4">
+            <a class="nav-link text-danger" href="#">
+                <i class="bi bi-box-arrow-right me-2"></i>
+                Déconnexion
+            </a>
+        </li>
+
+    </ul>
+
+</div>
+<div class="col-md-9 col-lg-10 p-4">
+    <div class="row g-3 mb-4">
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center">
+                <h2 class="text-primary">24</h2>
+                <p class="mb-0">Enseignants</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center">
+                <h2 class="text-success">38</h2>
+                <p class="mb-0">Cours</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center">
+                <h2 class="text-warning">12</h2>
+                <p class="mb-0">Vacations</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center">
+                <h2 class="text-danger">3</h2>
+                <p class="mb-0">Alertes</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+            <div class="row g-3">
             <!-- 1. VALIDATION DES FICHES DE VACATION -->
             <div class="col-lg-7">
                 <div class="card card-custom shadow-sm bg-white p-4 h-100">
@@ -115,7 +224,7 @@
 
         </div>
     </div>
-
+</div>
     <!-- Votre lien JS Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

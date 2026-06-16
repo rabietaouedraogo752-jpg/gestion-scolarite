@@ -11,6 +11,27 @@
         body { background-color: #f4f6f9; }
         .navbar-teacher { background-color: #0f172a; }
         .card-custom { border: none; border-radius: 12px; }
+        .sidebar {
+    min-height: calc(100vh - 56px);
+    background-color: #0f172a;
+}
+
+.sidebar .nav-link {
+    color: #cbd5e1;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    background-color: #1e293b;
+    color: white;
+}
+
+.main-content {
+    padding: 25px;
+}
     </style>
 </head>
 <body>
@@ -29,94 +50,169 @@
         </div>
     </nav>
 
-    <div class="container mt-4 mb-5">
-        <div class="row g-4">
-            <!-- 1. GESTION DES NOTES (Saisir / Importer) -->
-            <div class="col-md-7">
-                <div class="card card-custom shadow-sm bg-white p-4 h-100">
-                    <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-journal-check text-success me-2"></i> Saisie & Importation des Notes</h5>
-                    <p class="text-muted small">Sélectionnez un élément constitutif (EC) pour intégrer les notes.</p>
-                    
-                    <form class="row g-3 mb-4">
-                        <div class="col-sm-8">
-                            <select class="form-select form-select-sm">
-                                <option>Base de données avancée (L3 Info - Semestre 5)</option>
-                                <option>Algorithmique appliquée (L2 Info)</option>
-                            </select>
-                        </div>
-                        <div class="col-sm-4">
-                            <button type="button" class="btn btn-sm btn-primary w-100"><i class="bi bi-pencil-square"></i> Saisie Manuelle</button>
-                        </div>
-                    </form>
+    <div class="container-fluid">
+    <div class="row">
 
-                    <div class="border rounded p-3 bg-light text-center">
-                        <i class="bi bi-file-earmark-excel fs-2 text-success d-block mb-2"></i>
-                        <h6>Importer un fichier Excel / CSV</h6>
-                        <input type="file" class="form-control form-control-sm my-2">
-                        <button class="btn btn-sm btn-success text-uppercase fw-bold w-100">Valider l'importation</button>
-                    </div>
-                </div>
+        <!-- SIDEBAR -->
+        <div class="col-md-3 col-lg-2 sidebar p-3">
+
+            <h5 class="text-white text-center mb-4">
+                <i class="bi bi-person-workspace"></i>
+                Enseignant
+            </h5>
+
+            <ul class="nav flex-column">
+
+                <li>
+                    <a class="nav-link active" href="#">
+                        <i class="bi bi-house-door me-2"></i>
+                        Tableau de bord
+                    </a>
+                </li>
+
+                <li>
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-journal-check me-2"></i>
+                        Gestion des notes
+                    </a>
+                </li>
+
+                <li>
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-calculator me-2"></i>
+                        Vacations
+                    </a>
+                </li>
+
+                <li>
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-calendar3 me-2"></i>
+                        Planning
+                    </a>
+                </li>
+
+                <li>
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-book me-2"></i>
+                        Mes cours
+                    </a>
+                </li>
+
+                <li>
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-chat-left-text me-2"></i>
+                        Réclamations
+                    </a>
+                </li>
+
+                <li>
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-person-gear me-2"></i>
+                        Mon profil
+                    </a>
+                </li>
+
+                <li class="mt-4">
+                    <a class="nav-link text-danger" href="#">
+                        <i class="bi bi-box-arrow-right me-2"></i>
+                        Déconnexion
+                    </a>
+                </li>
+
+            </ul>
+
+        </div>
+
+        <!-- CONTENU -->
+         <!-- CONTENU PRINCIPAL -->
+<div class="col-md-9 col-lg-10 main-content">
+
+    <!-- Planning du jour -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h4 class="fw-bold">
+                <i class="bi bi-calendar-day text-primary"></i>
+                Planning du jour
+            </h4>
+
+            <div class="alert alert-info mt-3">
+                <strong>08h00 - 10h00 :</strong> Base de données avancée (Amphi A)
             </div>
 
-            <!-- 2. FICHE DE VACATION (Renseigner / Déclarer) -->
-            <div class="col-md-5">
-                <div class="card card-custom shadow-sm bg-white p-4 h-100">
-                    <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-calculator text-primary me-2"></i> Suivi des Vacations</h5>
-                    
-                    <div class="p-3 bg-light rounded mb-3 border border-primary">
-                        <div class="d-flex justify-content-between">
-                            <span class="small text-muted">Heures effectuées ce mois :</span>
-                            <span class="fw-bold text-primary">24 heures</span>
-                        </div>
-                    </div>
-
-                    <h6 class="fw-bold text-muted small text-uppercase mb-2">Déclarer de nouvelles heures</h6>
-                    <form class="row g-2">
-                        <div class="col-6">
-                            <input type="date" class="form-control form-control-sm" required>
-                        </div>
-                        <div class="col-6">
-                            <input type="number" class="form-control form-control-sm" placeholder="Nb heures" min="1" required>
-                        </div>
-                        <div class="col-100 w-100 mt-2">
-                            <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-send-plus"></i> Soumettre ma fiche de vacation</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- 3. CONSULTATION EMPLOI DU TEMPS -->
-            <div class="col-12">
-                <div class="card card-custom shadow-sm bg-white p-4">
-                    <h5 class="fw-bold text-secondary mb-3"><i class="bi bi-calendar3 text-warning me-2"></i> Mon Planning de Cours</h5>
-                    <div class="table-responsive">
-                        <table class="table table-bordered align-middle text-center small">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Lundi</th>
-                                    <th>Mardi</th>
-                                    <th>Mercredi</th>
-                                    <th>Jeudi</th>
-                                    <th>Vendredi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><div class="p-2 bg-info-subtle border border-info rounded"><strong>08h - 10h</strong><br>BD Avancée (Amphi A)</div></td>
-                                    <td>-</td>
-                                    <td><div class="p-2 bg-info-subtle border border-info rounded"><strong>10h - 12h</strong><br>BD Avancée (Labo 2)</div></td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="alert alert-success">
+                <strong>10h00 - 12h00 :</strong> TP Base de données (Labo 2)
             </div>
         </div>
     </div>
 
-    <!-- Votre lien JS Bootstrap -->
+    <!-- Planning hebdomadaire -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h4 class="fw-bold">
+                <i class="bi bi-calendar-week text-success"></i>
+                Planning hebdomadaire
+            </h4>
+
+            <table class="table table-bordered mt-3">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Lundi</th>
+                        <th>Mardi</th>
+                        <th>Mercredi</th>
+                        <th>Jeudi</th>
+                        <th>Vendredi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>BD Avancée</td>
+                        <td>-</td>
+                        <td>TP BD</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Cartes du bas -->
+    <div class="row">
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5>Gestion des notes</h5>
+
+                    <button class="btn btn-primary w-100 mb-2">
+                        Saisie manuelle
+                    </button>
+
+                    <button class="btn btn-success w-100">
+                        Import Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5>Vacations</h5>
+
+                    <h2 class="text-primary">24 h</h2>
+
+                    <button class="btn btn-primary w-100">
+                        Déclarer mes heures
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+        <div class="col-md-9 col-lg-10 main-content">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
