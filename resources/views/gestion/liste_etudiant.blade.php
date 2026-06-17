@@ -45,6 +45,7 @@
                 </div>
                 <div class="d-flex gap-2">
                     <a href="{{ route('gestion.creer_etudiant') }}" class="btn btn-primary"><i class="bi bi-person-plus me-2"></i> Ajouter un étudiant</a>
+                    <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#importStudentModal"><i class="bi bi-upload me-2"></i> Importer</button>
                     <div class="dropdown">
                         <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="bi bi-download me-2"></i> Exporter
@@ -58,6 +59,23 @@
                     </div>
                 </div>
             </div>
+
+            @if(session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+
+            @if(session('import_credentials'))
+                <div class="alert alert-info">
+                    <strong>Comptes créés :</strong>
+                    <ul class="mb-0">
+                        @foreach(session('import_credentials') as $c)
+                            <li>{{ $c['email'] }} — <strong>{{ $c['username'] }}</strong> / {{ $c['password'] }}</li>
+                        @endforeach
+                    </ul>
+                    <small class="text-muted">Conservez ces identifiants ; ils ne seront plus affichés.</small>
+                </div>
+            @endif
+
 
             <form id="studentFilters" method="GET" action="{{ route('gestion.liste_etudiant') }}" class="row mb-3">
                 <div class="col-md-4 mb-2">
@@ -132,6 +150,32 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="importStudentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Importer un fichier (pdf, excel, word, uml)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('gestion.import.etudiants') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Fichier</label>
+                            <input type="file" name="file" class="form-control" accept=".pdf,.xlsx,.xls,.docx,.doc,.uml" required>
+                            @error('file') <div class="text-danger small">{{ $message }}</div> @enderror
+                        </div>
+                        <p class="small text-muted">Le fichier sera simplement stocké; aucun traitement automatique n'est effectué.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                        <button type="submit" class="btn btn-primary">Importer</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

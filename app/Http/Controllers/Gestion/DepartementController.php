@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
 use PhpOffice\PhpWord\PhpWord;
+use Illuminate\Support\Facades\Storage;
+use App\Imports\DepartementsImport;
 
 class DepartementController extends Controller
 {
@@ -30,9 +32,17 @@ class DepartementController extends Controller
         return view('gestion.liste_departement', compact('departements', 'universites', 'universiteId'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('gestion.creer_departement');
+        $prefill = $request->only([
+            'code',
+            'nom',
+            'code_univ',
+            'nom_universite',
+            'ville',
+        ]);
+
+        return view('gestion.creer_departement', compact('prefill'));
     }
 
     public function store(Request $request)
@@ -149,5 +159,24 @@ class DepartementController extends Controller
             ->view('gestion.exports.departements_html', compact('departements'))
             ->header('Content-Type', 'text/html; charset=utf-8')
             ->header('Content-Disposition', 'attachment; filename="departements_'.date('Y-m-d').'.html"');
+    }
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,xlsx,xls,ods,pdf,docx,doc,uml|max:10240',
+        ]);
+
+        $file = $request->file('file');
+        $ext = strtolower($file->getClientOriginalExtension());
+
+        if (in_array($ext, ['xlsx', 'xls', 'csv', 'ods'])) {
+            Excel::import(new DepartementsImport, $file);
+            return back()->with('success', 'Import Excel traité: enregistrements créés/mis à jour.');
+        }
+
+        $filename = time().'_'.preg_replace('/[^A-Za-z0-9\\-_.]/', '_', $file->getClientOriginalName());
+        $path = $file->storeAs('imports/departements', $filename);
+
+        return back()->with('success', 'Fichier enregistré (pas de parsing automatique pour ce type): '.$path);
     }
 }

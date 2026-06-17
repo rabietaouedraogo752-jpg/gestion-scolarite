@@ -10,6 +10,22 @@
 <div class="container py-4">
 	<h2>Créer un étudiant</h2>
 
+	@php
+		$prefill = $prefill ?? request()->all();
+	@endphp
+
+	@if(!empty($prefill['name']) || !empty($prefill['email']) || !empty($prefill['date_naissance']) || !empty($prefill['telephone']))
+		<div class="alert alert-info">
+			<h5 class="mb-2">Informations préremplies</h5>
+			<ul class="mb-0">
+				@if(!empty($prefill['name']))<li><strong>Nom complet :</strong> {{ $prefill['name'] }}</li>@endif
+				@if(!empty($prefill['email']))<li><strong>Email :</strong> {{ $prefill['email'] }}</li>@endif
+				@if(!empty($prefill['date_naissance']))<li><strong>Date de naissance :</strong> {{ $prefill['date_naissance'] }}</li>@endif
+				@if(!empty($prefill['telephone']))<li><strong>Téléphone :</strong> {{ $prefill['telephone'] }}</li>@endif
+			</ul>
+		</div>
+	@endif
+
 	@if(session('success'))
 		<div class="alert alert-success">{{ session('success') }}</div>
 	@endif
@@ -28,15 +44,15 @@
 		@csrf
 		<div class="mb-3">
 			<label class="form-label">Nom complet</label>
-			<input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
+			<input type="text" name="name" class="form-control" value="{{ old('name', $prefill['name'] ?? '') }}" required>
 		</div>
 		<div class="mb-3">
 			<label class="form-label">Email</label>
-			<input type="email" name="email" class="form-control" value="{{ old('email') }}" required>
+			<input type="email" name="email" class="form-control" value="{{ old('email', $prefill['email'] ?? '') }}" required>
 		</div>
 		<div class="mb-3">
 			<label class="form-label">Matricule (INE)</label>
-			<input type="text" name="matricule" class="form-control" value="{{ old('matricule') }}" required>
+			<input type="text" name="matricule" class="form-control" value="{{ old('matricule', $prefill['matricule'] ?? '') }}" required>
 		</div>
 		<div class="mb-3">
 			<label class="form-label">Genre</label>
@@ -63,11 +79,11 @@
 		<div class="row">
 			<div class="col-md-6 mb-3">
 				<label class="form-label">Date de naissance</label>
-				<input type="date" name="date_naissance" class="form-control" value="{{ old('date_naissance') }}" required>
+				<input type="date" name="date_naissance" class="form-control" value="{{ old('date_naissance', $prefill['date_naissance'] ?? '') }}" required>
 			</div>
 			<div class="col-md-6 mb-3">
 				<label class="form-label">Lieu de naissance</label>
-				<input type="text" name="lieu_naissance" class="form-control" value="{{ old('lieu_naissance') }}" required>
+				<input type="text" name="lieu_naissance" class="form-control" value="{{ old('lieu_naissance', $prefill['lieu_naissance'] ?? '') }}" required>
 			</div>
 		</div>
 

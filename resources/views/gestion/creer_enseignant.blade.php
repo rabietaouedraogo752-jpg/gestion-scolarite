@@ -10,6 +10,22 @@
 <div class="container py-4">
     <h2>Créer un enseignant</h2>
 
+    @php
+        $prefill = $prefill ?? request()->all();
+    @endphp
+
+    @if(!empty($prefill['name']) || !empty($prefill['email']) || !empty($prefill['date_naissance']) || !empty($prefill['telephone']))
+        <div class="alert alert-info">
+            <h5 class="mb-2">Informations préremplies</h5>
+            <ul class="mb-0">
+                @if(!empty($prefill['name']))<li><strong>Nom complet :</strong> {{ $prefill['name'] }}</li>@endif
+                @if(!empty($prefill['email']))<li><strong>Email :</strong> {{ $prefill['email'] }}</li>@endif
+                @if(!empty($prefill['date_naissance']))<li><strong>Date de naissance :</strong> {{ $prefill['date_naissance'] }}</li>@endif
+                @if(!empty($prefill['telephone']))<li><strong>Téléphone :</strong> {{ $prefill['telephone'] }}</li>@endif
+            </ul>
+        </div>
+    @endif
+
     @if($errors->any())
         <div class="alert alert-danger">
             <ul class="mb-0">
@@ -24,30 +40,30 @@
         @csrf
         <div class="mb-3">
             <label class="form-label">Nom complet</label>
-            <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
+            <input type="text" name="name" class="form-control" value="{{ old('name', $prefill['name'] ?? '') }}" required>
         </div>
         <div class="mb-3">
             <label class="form-label">Email</label>
-            <input type="email" name="email" class="form-control" value="{{ old('email') }}" required>
+            <input type="email" name="email" class="form-control" value="{{ old('email', $prefill['email'] ?? '') }}" required>
         </div>
         <div class="mb-3">
             <label class="form-label">Matricule fonctionnaire</label>
-            <input type="text" name="matricule_fonctionnaire" class="form-control" value="{{ old('matricule_fonctionnaire') }}">
+            <input type="text" name="matricule_fonctionnaire" class="form-control" value="{{ old('matricule_fonctionnaire', $prefill['matricule_fonctionnaire'] ?? request('matricule_fonctionnaire')) }}">
         </div>
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label class="form-label">Grade</label>
                 <select name="grade" class="form-select" required>
                     <option value="">-- Choisir --</option>
-                    <option value="MA" {{ old('grade') === 'MA' ? 'selected' : '' }}>MA</option>
-                    <option value="MC" {{ old('grade') === 'MC' ? 'selected' : '' }}>MC</option>
-                    <option value="PT" {{ old('grade') === 'PT' ? 'selected' : '' }}>PT</option>
-                    <option value="Vacataire" {{ old('grade') === 'Vacataire' ? 'selected' : '' }}>Vacataire</option>
+                    <option value="MA" {{ old('grade', $prefill['grade'] ?? request('grade')) === 'MA' ? 'selected' : '' }}>MA</option>
+                    <option value="MC" {{ old('grade', $prefill['grade'] ?? request('grade')) === 'MC' ? 'selected' : '' }}>MC</option>
+                    <option value="PT" {{ old('grade', $prefill['grade'] ?? request('grade')) === 'PT' ? 'selected' : '' }}>PT</option>
+                    <option value="Vacataire" {{ old('grade', $prefill['grade'] ?? request('grade')) === 'Vacataire' ? 'selected' : '' }}>Vacataire</option>
                 </select>
             </div>
             <div class="col-md-6 mb-3">
                 <label class="form-label">Téléphone</label>
-                <input type="text" name="telephone" class="form-control" value="{{ old('telephone') }}">
+                <input type="text" name="telephone" class="form-control" value="{{ old('telephone', $prefill['telephone'] ?? request('telephone')) }}">
             </div>
         </div>
 

@@ -15,12 +15,29 @@ use PDF;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\Shared\Inches;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\Storage;
+use App\Imports\EtudiantsImport;
+use Maatwebsite\Excel\Validators\Failure;
+use Maatwebsite\Excel\HeadingRowImport;
+use Maatwebsite\Excel\Excel as ExcelType;
 
 class EtudiantController extends Controller
 {
-    public function create()
+    public function create(Request $request)
     {
-        return view('gestion.creer_etudiant');
+        $prefill = $request->only([
+            'name',
+            'email',
+            'matricule',
+            'genre',
+            'filiere',
+            'niveau',
+            'annee_academique',
+            'date_naissance',
+            'lieu_naissance',
+        ]);
+
+        return view('gestion.creer_etudiant', compact('prefill'));
     }
 
     public function index(Request $request)
@@ -83,6 +100,7 @@ class EtudiantController extends Controller
         [$anneeDebut, $anneeFin] = explode('-', $data['annee_academique']);
 
         $etudiant->update([
+            'nom_prenom' => $data['name'],
             'matricule' => $data['matricule'],
             'date_naissance' => $data['date_naissance'],
             'lieu_naissance' => $data['lieu_naissance'],
@@ -110,7 +128,6 @@ class EtudiantController extends Controller
             'annee_academique' => ['required', 'regex:/^\d{4}-\d{4}$/'],
         ]);
 
-        // generate a username and a random password, then create user
         $username = strtolower(str_replace(' ', '.', $data['name'])) . '.' . Str::random(3);
         $plainPassword = Str::random(10);
         $user = User::create([
@@ -121,7 +138,6 @@ class EtudiantController extends Controller
             'role' => 'etudiant',
         ]);
 
-        // create or find filiere by name
         $filere = null;
         if (!empty($data['filiere'])) {
             $filere = Filiere::firstOrCreate([
@@ -129,16 +145,15 @@ class EtudiantController extends Controller
             ]);
         }
 
-        // create or update niveau by code
         $niveau = Niveau::updateOrCreate(
             ['code_niveau' => $data['niveau']],
             ['intitule' => $data['niveau']]
         );
 
-        // create etudiant
         [$anneeDebut, $anneeFin] = explode('-', $data['annee_academique']);
         Etudiant::create([
             'user_id' => $user->id,
+            'nom_prenom' => $data['name'],
             'matricule' => $data['matricule'],
             'date_naissance' => $data['date_naissance'],
             'lieu_naissance' => $data['lieu_naissance'],
@@ -150,9 +165,33 @@ class EtudiantController extends Controller
             'generated_password' => $plainPassword,
         ]);
 
-        // return to list with credentials shown once
         $credentials = ['username' => $user->username, 'password' => $plainPassword];
         return redirect()->route('gestion.liste_etudiant')->with('success', 'Étudiant créé avec succès.')->with('credentials', $credentials);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,xlsx,xls,ods,pdf,docx,doc,uml|max:10240',
+        ]);
+
+        $file = $request->file('file');
+        $ext = strtolower($file->getClientOriginalExtension());
+
+        if (in_array($ext, ['xlsx', 'xls', 'csv', 'ods'])) {
+            $import = new EtudiantsImport();
+            Excel::import($import, $file);
+            $created = $import->getCreatedCredentials();
+            if (!empty($created)) {
+                return back()->with('success', 'Import terminé.')->with('import_credentials', $created);
+            }
+            return back()->with('success', 'Import Excel traité: enregistrements créés/mis à jour.');
+        }
+
+        $filename = time().'_'.preg_replace('/[^A-Za-z0-9\\-_.]/', '_', $file->getClientOriginalName());
+        $path = $file->storeAs('imports/etudiants', $filename);
+
+        return back()->with('success', 'Fichier enregistré (pas de parsing automatique pour ce type): '.$path);
     }
 
     public function exportExcel()

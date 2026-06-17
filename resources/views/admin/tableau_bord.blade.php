@@ -65,7 +65,7 @@
                         <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
                             <div>
                                 <h6 class="text-muted small text-uppercase">Étudiants</h6>
-                                <h3 class="fw-bold mb-0">1,245</h3>
+                                <h3 class="fw-bold mb-0">{{ number_format($etudiants) }}</h3>
                             </div>
                             <div class="fs-1 text-primary"><i class="bi bi-people-fill"></i></div>
                         </div>
@@ -77,7 +77,7 @@
                         <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
                             <div>
                                 <h6 class="text-muted small text-uppercase">Enseignants</h6>
-                                <h3 class="fw-bold mb-0">84</h3>
+                                <h3 class="fw-bold mb-0">{{ number_format($enseignants) }}</h3>
                             </div>
                             <div class="fs-1 text-success"><i class="bi bi-person-badge-fill"></i></div>
                         </div>
@@ -89,7 +89,7 @@
                         <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
                             <div>
                                 <h6 class="text-muted small text-uppercase">Départements</h6>
-                                <h3 class="fw-bold mb-0">6</h3>
+                                <h3 class="fw-bold mb-0">{{ number_format($departements) }}</h3>
                             </div>
                             <div class="fs-1 text-warning"><i class="bi bi-building-fill"></i></div>
                         </div>
@@ -101,7 +101,7 @@
                         <div class="card card-stat bg-white shadow-sm p-3 d-flex flex-row align-items-center justify-content-between">
                             <div>
                                 <h6 class="text-muted small text-uppercase">Inscriptions en attente</h6>
-                                <h3 class="fw-bold mb-0 text-danger">12</h3>
+                                <h3 class="fw-bold mb-0 text-danger">{{ number_format($inscriptions_en_attente) }}</h3>
                             </div>
                             <div class="fs-1 text-danger"><i class="bi bi-exclamation-circle-fill"></i></div>
                         </div>
@@ -123,16 +123,49 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td class="fw-semibold">Alizèta SAWADOGO</td>
-                                <td>alizeta@etudiant.bf</td>
-                                <td><span class="badge bg-info text-dark">Étudiant</span></td>
-                                <td><span class="badge bg-warning">En attente</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-success me-1"><i class="bi bi-check-lg"></i></button>
-                                    <button class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
-                                </td>
-                            </tr>
+                                        @if($latestInscription)
+                                @php
+                                    $inscriptionQuery = array_filter([
+                                        'prenom' => $latestInscription->prenom,
+                                        'nom' => $latestInscription->nom,
+                                        'name' => trim($latestInscription->prenom . ' ' . $latestInscription->nom),
+                                        'email' => $latestInscription->email,
+                                        'date_naissance' => optional($latestInscription->date_naissance)->format('Y-m-d'),
+                                        'telephone' => $latestInscription->telephone,
+                                    ]);
+                                @endphp
+                                <tr>
+                                    <td class="fw-semibold">{{ $latestInscription->prenom }} {{ $latestInscription->nom }}</td>
+                                    <td>{{ $latestInscription->email }}</td>
+                                    <td><span class="badge bg-info text-dark">Étudiant</span></td>
+                                    <td>
+                                        @if($latestInscription->status === 'en_attente')
+                                            <span class="badge bg-warning">En attente</span>
+                                        @elseif($latestInscription->status === 'approuvee')
+                                            <span class="badge bg-success">Approuvée</span>
+                                        @else
+                                            <span class="badge bg-danger">Rejetée</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <a href="{{ route('gestion.creer_etudiant') }}?{{ http_build_query($inscriptionQuery) }}" class="btn btn-sm btn-success" title="Créer un étudiant">
+                                                <i class="bi bi-person-plus"></i>
+                                            </a>
+                                            <a href="{{ route('gestion.creer_enseignant') }}?{{ http_build_query($inscriptionQuery) }}" class="btn btn-sm btn-info" title="Créer un enseignant">
+                                                <i class="bi bi-person-badge"></i>
+                                            </a>
+                                            <a href="{{ route('gestion.creer_departement') }}?{{ http_build_query($inscriptionQuery) }}" class="btn btn-sm btn-warning text-white" title="Créer un département">
+                                                <i class="bi bi-building-add"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @else
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Aucune demande d'inscription récente.</td>
+                                </tr>
+                            @endif
                         </tbody>
                     </table>
                 </div>

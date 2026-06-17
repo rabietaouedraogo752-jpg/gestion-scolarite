@@ -10,6 +10,22 @@
 <div class="container py-4">
     <h2>Créer un département</h2>
 
+    @php
+        $prefill = $prefill ?? request()->all();
+    @endphp
+
+    @if(!empty($prefill['name']) || !empty($prefill['email']) || !empty($prefill['date_naissance']) || !empty($prefill['telephone']))
+        <div class="alert alert-info">
+            <h5 class="mb-2">Informations préremplies</h5>
+            <ul class="mb-0">
+                @if(!empty($prefill['name']))<li><strong>Nom complet :</strong> {{ $prefill['name'] }}</li>@endif
+                @if(!empty($prefill['email']))<li><strong>Email :</strong> {{ $prefill['email'] }}</li>@endif
+                @if(!empty($prefill['date_naissance']))<li><strong>Date de naissance :</strong> {{ $prefill['date_naissance'] }}</li>@endif
+                @if(!empty($prefill['telephone']))<li><strong>Téléphone :</strong> {{ $prefill['telephone'] }}</li>@endif
+            </ul>
+        </div>
+    @endif
+
     @if($errors->any())
         <div class="alert alert-danger">
             <ul class="mb-0">
@@ -25,11 +41,11 @@
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label class="form-label">Code département</label>
-                <input type="text" name="code" class="form-control" value="{{ old('code') }}" placeholder="Ex: UFR-SEA" required>
+                <input type="text" name="code" class="form-control" value="{{ old('code', $prefill['code'] ?? request('code')) }}" placeholder="Ex: UFR-SEA" required>
             </div>
             <div class="col-md-8 mb-3">
                 <label class="form-label">Nom département</label>
-                <input type="text" name="nom" class="form-control" value="{{ old('nom') }}" required>
+                <input type="text" name="nom" class="form-control" value="{{ old('nom', $prefill['nom'] ?? request('nom')) }}" required>
             </div>
         </div>
 
@@ -37,15 +53,15 @@
         <div class="row">
             <div class="col-md-3 mb-3">
                 <label class="form-label">Code université</label>
-                <input type="text" name="code_univ" class="form-control" value="{{ old('code_univ') }}" placeholder="Ex: UVBF" required>
+                <input type="text" name="code_univ" class="form-control" value="{{ old('code_univ', $prefill['code_univ'] ?? request('code_univ')) }}" placeholder="Ex: UVBF" required>
             </div>
             <div class="col-md-6 mb-3">
                 <label class="form-label">Nom université</label>
-                <input type="text" name="nom_universite" class="form-control" value="{{ old('nom_universite') }}" required>
+                <input type="text" name="nom_universite" class="form-control" value="{{ old('nom_universite', $prefill['nom_universite'] ?? request('nom_universite')) }}" required>
             </div>
             <div class="col-md-3 mb-3">
                 <label class="form-label">Ville</label>
-                <input type="text" name="ville" class="form-control" value="{{ old('ville') }}" required>
+                <input type="text" name="ville" class="form-control" value="{{ old('ville', $prefill['ville'] ?? request('ville')) }}" required>
             </div>
         </div>
 

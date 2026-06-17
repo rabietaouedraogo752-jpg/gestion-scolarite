@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
 use PhpOffice\PhpWord\PhpWord;
+use Illuminate\Support\Facades\Storage;
+use App\Imports\EnseignantsImport;
 
 class EnseignantController extends Controller
 {
@@ -23,9 +25,17 @@ class EnseignantController extends Controller
             ->orderBy('id', 'desc');
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('gestion.creer_enseignant');
+        $prefill = $request->only([
+            'name',
+            'email',
+            'matricule_fonctionnaire',
+            'grade',
+            'telephone',
+        ]);
+
+        return view('gestion.creer_enseignant', compact('prefill'));
     }
 
     public function edit(Enseignant $enseignant)
@@ -168,5 +178,29 @@ class EnseignantController extends Controller
             ->view('gestion.exports.enseignants_html', compact('enseignants'))
             ->header('Content-Type', 'text/html; charset=utf-8')
             ->header('Content-Disposition', 'attachment; filename="enseignants_'.date('Y-m-d').'.html"');
+    }
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,xlsx,xls,ods,pdf,docx,doc,uml|max:10240',
+        ]);
+
+        $file = $request->file('file');
+        $ext = strtolower($file->getClientOriginalExtension());
+
+        if (in_array($ext, ['xlsx', 'xls', 'csv', 'ods'])) {
+            $import = new EnseignantsImport();
+            Excel::import($import, $file);
+            $created = $import->getCreatedCredentials();
+            if (!empty($created)) {
+                return back()->with('success', 'Import terminé.')->with('import_credentials', $created);
+            }
+            return back()->with('success', 'Import Excel traité: enregistrements créés/mis à jour.');
+        }
+
+        $filename = time().'_'.preg_replace('/[^A-Za-z0-9\\-_.]/', '_', $file->getClientOriginalName());
+        $path = $file->storeAs('imports/enseignants', $filename);
+
+        return back()->with('success', 'Fichier enregistré (pas de parsing automatique pour ce type): '.$path);
     }
 }

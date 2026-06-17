@@ -44,10 +44,13 @@
             <a class="navbar-brand fw-bold" href="#"><i class="bi bi-mortarboard-fill me-2"></i> Plateforme Pédagogique</a>
             <div class="collapse navbar-collapse justify-content-end">
                 <span class="navbar-text text-white me-3 fw-semibold">
-                    <i class="bi bi-person-circle me-1"></i> Alizèta SAWADOGO (L3 Info)
+                    <i class="bi bi-person-circle me-1"></i> {{ auth()->user()->name ?? 'Étudiant' }}
                 </span>
                 <button class="btn btn-sm btn-outline-light me-2"><i class="bi bi-person-gear"></i> Gérer mon profil</button>
-                <a href="#" class="btn btn-sm btn-danger"><i class="bi bi-box-arrow-right"></i> Déconnexion</a>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-box-arrow-right"></i> Déconnexion</button>
+                </form>
             </div>
         </div>
     </nav>
@@ -114,10 +117,13 @@
                 </li>
 
                 <li class="nav-item mt-4">
-                    <a href="#" class="nav-link text-danger">
-                        <i class="bi bi-box-arrow-right me-2"></i>
-                        Déconnexion
-                    </a>
+                    <form action="{{ route('logout') }}" method="POST" class="m-0">
+                        @csrf
+                        <button type="submit" class="nav-link btn btn-link text-danger p-0">
+                            <i class="bi bi-box-arrow-right me-2"></i>
+                            Déconnexion
+                        </button>
+                    </form>
                 </li>
 
             </ul>
@@ -135,32 +141,48 @@
                     Emploi du temps du jour
                 </h5>
 
-                <table class="table table-bordered">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Heure</th>
-                            <th>Matière</th>
-                            <th>Salle</th>
-                            <th>Enseignant</th>
-                        </tr>
-                    </thead>
+                @php
+                    $today = strtolower(\Carbon\Carbon::now()->format('l'));
+                    $dayMap = [
+                        'monday' => 'lundi',
+                        'tuesday' => 'mardi',
+                        'wednesday' => 'mercredi',
+                        'thursday' => 'jeudi',
+                        'friday' => 'vendredi',
+                        'saturday' => 'samedi',
+                        'sunday' => 'dimanche'
+                    ];
+                    $todayFr = $dayMap[$today] ?? 'lundi';
+                    $emploisAujourdhui = $emplois->filter(fn($e) => strtolower($e->jour) === $todayFr);
+                @endphp
 
-                    <tbody>
-                        <tr>
-                            <td>08h00 - 10h00</td>
-                            <td>Base de données avancée</td>
-                            <td>Amphi A</td>
-                            <td>Dr. Ouédraogo</td>
-                        </tr>
+                @if ($emploisAujourdhui->count() > 0)
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Heure</th>
+                                <th>Matière</th>
+                                <th>Salle</th>
+                                <th>Enseignant</th>
+                            </tr>
+                        </thead>
 
-                        <tr>
-                            <td>10h15 - 12h15</td>
-                            <td>Développement Laravel</td>
-                            <td>Labo Info 2</td>
-                            <td>M. Traoré</td>
-                        </tr>
-                    </tbody>
-                </table>
+                        <tbody>
+                            @foreach ($emploisAujourdhui as $emploi)
+                                <tr>
+                                    <td>{{ substr($emploi->heure_debut, 0, 5) }} - {{ substr($emploi->heure_fin, 0, 5) }}</td>
+                                    <td>{{ $emploi->matiere }}</td>
+                                    <td>{{ $emploi->salle }}</td>
+                                    <td>{{ $emploi->enseignant }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @else
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle"></i> Aucun cours prévu pour aujourd'hui
+                    </div>
+                @endif
 
             </div>
 
@@ -172,49 +194,59 @@
                     Emploi du temps hebdomadaire
                 </h5>
 
-                <table class="table table-bordered table-hover text-center">
+                @if ($emplois->count() > 0)
+                    <table class="table table-bordered table-hover text-center">
 
-                    <thead class="table-primary">
-                        <tr>
-                            <th>Heure</th>
-                            <th>Lundi</th>
-                            <th>Mardi</th>
-                            <th>Mercredi</th>
-                            <th>Jeudi</th>
-                            <th>Vendredi</th>
-                        </tr>
-                    </thead>
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Heure</th>
+                                <th>Lundi</th>
+                                <th>Mardi</th>
+                                <th>Mercredi</th>
+                                <th>Jeudi</th>
+                                <th>Vendredi</th>
+                            </tr>
+                        </thead>
 
-                    <tbody>
-                        <tr>
-                            <td>08h00-10h00</td>
-                            <td>BDD</td>
-                            <td>Réseaux</td>
-                            <td>Laravel</td>
-                            <td>Maths</td>
-                            <td>IA</td>
-                        </tr>
+                        <tbody>
+                            @php
+                                $jours = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi'];
+                                $heures = [];
+                                foreach ($emplois as $e) {
+                                    $h = (int)substr($e->heure_debut, 0, 2);
+                                    $heures[$h] = true;
+                                }
+                                ksort($heures);
+                            @endphp
 
-                        <tr>
-                            <td>10h15-12h15</td>
-                            <td>Laravel</td>
-                            <td>UML</td>
-                            <td>Projet</td>
-                            <td>BD</td>
-                            <td>Sécurité</td>
-                        </tr>
+                            @foreach (array_keys($heures) as $heure)
+                                <tr>
+                                    <td><strong>{{ str_pad($heure, 2, '0', STR_PAD_LEFT) }}h00</strong></td>
+                                    @foreach ($jours as $jour)
+                                        <td>
+                                            @php
+                                                $cours = $emplois->filter(function($e) use ($jour, $heure) {
+                                                    return strtolower($e->jour) === $jour && (int)substr($e->heure_debut, 0, 2) === $heure;
+                                                })->first();
+                                            @endphp
+                                            @if ($cours)
+                                                <div class="bg-primary text-white p-2 rounded">
+                                                    <small><strong>{{ $cours->matiere }}</strong></small><br>
+                                                    <small>{{ $cours->salle }}</small>
+                                                </div>
+                                            @endif
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @endforeach
+                        </tbody>
 
-                        <tr>
-                            <td>14h00-16h00</td>
-                            <td>TP BDD</td>
-                            <td>TP Réseaux</td>
-                            <td>TP Laravel</td>
-                            <td>Projet</td>
-                            <td>Libre</td>
-                        </tr>
-                    </tbody>
-
-                </table>
+                    </table>
+                @else
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle"></i> Aucun emploi du temps planifié pour votre filière
+                    </div>
+                @endif
 
             </div>
 
