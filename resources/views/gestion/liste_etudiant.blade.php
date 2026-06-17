@@ -27,7 +27,6 @@
 
     <div class="container">
         <div class="card table-card bg-white p-4 mb-4">
-
             @if(session('credentials'))
                 @php $c = session('credentials'); @endphp
                 <div class="alert alert-info">
@@ -60,28 +59,36 @@
                 </div>
             </div>
 
-            <div class="row mb-3">
+            <form id="studentFilters" method="GET" action="{{ route('gestion.liste_etudiant') }}" class="row mb-3">
                 <div class="col-md-4 mb-2">
                     <label class="form-label small text-muted">Filtrer par filière</label>
-                    <select id="filterFiliere" class="form-select">
+                    <select id="filterFiliere" name="filiere_id" class="form-select">
                         <option value="">Toutes les filières</option>
-                        <option>Informatique</option>
-                        <option>Mathématiques</option>
+                        @foreach($filieres as $filiere)
+                            <option value="{{ $filiere->id }}" @selected((string) $filiereId === (string) $filiere->id)>
+                                {{ $filiere->nom_filiere }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="col-md-4 mb-2">
                     <label class="form-label small text-muted">Filtrer par niveau</label>
-                    <select id="filterNiveau" class="form-select">
+                    <select id="filterNiveau" name="niveau_id" class="form-select">
                         <option value="">Tous les niveaux</option>
-                        <option>L1</option>
-                        <option>L2</option>
-                        <option>L3</option>
+                        @foreach($niveaux as $niveau)
+                            <option value="{{ $niveau->id }}" @selected((string) $niveauId === (string) $niveau->id)>
+                                {{ $niveau->code_niveau }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
-                <div class="col-md-4 d-flex align-items-end mb-2">
-                    <button id="clearFilters" class="btn btn-outline-secondary">Réinitialiser</button>
+                <div class="col-md-4 d-flex align-items-end gap-2 mb-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel me-2"></i> Filtrer
+                    </button>
+                    <a href="{{ route('gestion.liste_etudiant') }}" class="btn btn-outline-secondary">Réinitialiser</a>
                 </div>
-            </div>
+            </form>
 
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
@@ -120,7 +127,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center">Aucun étudiant trouvé.</td>
+                                <td colspan="9" class="text-center">Aucun étudiant trouvé.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -132,30 +139,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const filiereSel = document.getElementById('filterFiliere');
-            const niveauSel = document.getElementById('filterNiveau');
-            const clearBtn = document.getElementById('clearFilters');
-            const rows = document.querySelectorAll('table tbody tr');
-
-            function applyFilter() {
-                const fil = filiereSel.value.trim().toLowerCase();
-                const niv = niveauSel.value.trim().toLowerCase();
-
-                rows.forEach(r => {
-                    const filiere = (r.cells[4] && r.cells[4].textContent || '').trim().toLowerCase();
-                    const niveau = (r.cells[5] && r.cells[5].textContent || '').trim().toLowerCase();
-
-                    const match = (fil === '' || filiere === fil) && (niv === '' || niveau === niv);
-                    r.style.display = match ? '' : 'none';
+            const filtersForm = document.getElementById('studentFilters');
+            document.querySelectorAll('#filterFiliere, #filterNiveau').forEach(function (select) {
+                select.addEventListener('change', function () {
+                    filtersForm.submit();
                 });
-            }
-
-            filiereSel.addEventListener('change', applyFilter);
-            niveauSel.addEventListener('change', applyFilter);
-            clearBtn.addEventListener('click', function () {
-                filiereSel.value = '';
-                niveauSel.value = '';
-                applyFilter();
             });
         });
     </script>

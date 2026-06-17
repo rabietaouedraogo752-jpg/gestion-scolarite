@@ -23,10 +23,25 @@ class EtudiantController extends Controller
         return view('gestion.creer_etudiant');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $etudiants = Etudiant::with('user', 'filiere', 'niveau')->orderBy('id', 'desc')->get();
-        return view('gestion.liste_etudiant', compact('etudiants'));
+        $filiereId = $request->query('filiere_id');
+        $niveauId = $request->query('niveau_id');
+
+        $etudiants = Etudiant::with('user', 'filiere', 'niveau')
+            ->when($filiereId, function ($query) use ($filiereId) {
+                $query->where('filiere_id', $filiereId);
+            })
+            ->when($niveauId, function ($query) use ($niveauId) {
+                $query->where('niveau_id', $niveauId);
+            })
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $filieres = Filiere::orderBy('nom_filiere')->get();
+        $niveaux = Niveau::orderBy('code_niveau')->get();
+
+        return view('gestion.liste_etudiant', compact('etudiants', 'filieres', 'niveaux', 'filiereId', 'niveauId'));
     }
 
     public function edit(Etudiant $etudiant)

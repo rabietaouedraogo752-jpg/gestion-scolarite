@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Créer un département</title>
+    <title>Modifier un département</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 <div class="container py-4">
-    <h2>Créer un département</h2>
+    <h2>Modifier un département</h2>
 
     @if($errors->any())
         <div class="alert alert-danger">
@@ -20,16 +20,18 @@
         </div>
     @endif
 
-    <form method="post" action="{{ route('gestion.creer_departement.store') }}">
+    <form method="post" action="{{ route('gestion.editer_departement.update', $departement) }}">
         @csrf
+        @method('PUT')
+
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label class="form-label">Code département</label>
-                <input type="text" name="code" class="form-control" value="{{ old('code') }}" placeholder="Ex: UFR-SEA" required>
+                <input type="text" name="code" class="form-control" value="{{ old('code', $departement->code) }}" required>
             </div>
             <div class="col-md-8 mb-3">
                 <label class="form-label">Nom département</label>
-                <input type="text" name="nom" class="form-control" value="{{ old('nom') }}" required>
+                <input type="text" name="nom" class="form-control" value="{{ old('nom', $departement->nom) }}" required>
             </div>
         </div>
 
@@ -37,20 +39,20 @@
         <div class="row">
             <div class="col-md-3 mb-3">
                 <label class="form-label">Code université</label>
-                <input type="text" name="code_univ" class="form-control" value="{{ old('code_univ') }}" placeholder="Ex: UVBF" required>
+                <input type="text" name="code_univ" class="form-control" value="{{ old('code_univ', $departement->universite->code_univ ?? '') }}" required>
             </div>
             <div class="col-md-6 mb-3">
                 <label class="form-label">Nom université</label>
-                <input type="text" name="nom_universite" class="form-control" value="{{ old('nom_universite') }}" required>
+                <input type="text" name="nom_universite" class="form-control" value="{{ old('nom_universite', $departement->universite->nom_universite ?? '') }}" required>
             </div>
             <div class="col-md-3 mb-3">
                 <label class="form-label">Ville</label>
-                <input type="text" name="ville" class="form-control" value="{{ old('ville') }}" required>
+                <input type="text" name="ville" class="form-control" value="{{ old('ville', $departement->universite->ville ?? '') }}" required>
             </div>
         </div>
 
         <div class="d-flex gap-2">
-            <button class="btn btn-primary" type="submit">Créer</button>
+            <button class="btn btn-primary" type="submit">Enregistrer</button>
             <a href="{{ route('gestion.liste_departement') }}" class="btn btn-secondary">Annuler</a>
         </div>
     </form>

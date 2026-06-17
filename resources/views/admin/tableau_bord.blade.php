@@ -32,10 +32,10 @@
                     <a href="{{ route('gestion.liste_etudiant') }}" class="nav-link"><i class="bi bi-people me-2"></i> Étudiants</a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link"><i class="bi bi-person-badge me-2"></i> Enseignants</a>
+                    <a href="{{ route('gestion.liste_enseignant') }}" class="nav-link"><i class="bi bi-person-badge me-2"></i> Enseignants</a>
                 </li>
                 <li>
-                    <a href="#" class="nav-link"><i class="bi bi-building me-2"></i> Départements</a>
+                    <a href="{{ route('gestion.liste_departement') }}" class="nav-link"><i class="bi bi-building me-2"></i> Départements</a>
                 </li>
                 <li>
                     <a href="#" class="nav-link"><i class="bi bi-journal-text me-2"></i> Examens & Notes</a>
