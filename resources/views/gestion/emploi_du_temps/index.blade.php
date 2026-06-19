@@ -4,7 +4,7 @@
 <div class="container mt-5">
     <div class="row">
         <div class="col-md-12">
-            <h2 class="mb-4"><i class="bi bi-calendar-event"></i> Gestion des Emplois du Temps</h2>
+            <h2 class="mb-4"><i class="bi bi-calendar-event"></i> Gestion des Emplois du Temps par Niveau</h2>
 
             @if ($errors->any())
                 <div class="alert alert-danger">
@@ -22,24 +22,56 @@
 
             <div class="row">
                 @forelse ($filieres as $filiere)
-                    <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="col-md-12 mb-4">
                         <div class="card shadow-sm">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">{{ $filiere->nom_filiere }}</h5>
+                            </div>
                             <div class="card-body">
-                                <h5 class="card-title">{{ $filiere->nom_filiere }}</h5>
-                                <p class="card-text text-muted">
-                                    <small>
-                                        Étudiants: <strong>{{ $filiere->etudiants()->count() }}</strong><br>
-                                        Cours: <strong>{{ $filiere->emploisDuTemps()->count() }}</strong>
-                                    </small>
+                                <p class="text-muted mb-3">
+                                    <i class="bi bi-people"></i> <strong>Étudiants:</strong> {{ $filiere->etudiants()->count() }}
                                 </p>
-                                <div class="btn-group w-100" role="group">
-                                    <a href="{{ route('gestion.emploi_du_temps.show', $filiere) }}" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-eye"></i> Voir
-                                    </a>
-                                    <a href="{{ route('gestion.emploi_du_temps.create', $filiere) }}" class="btn btn-sm btn-success">
-                                        <i class="bi bi-plus"></i> Ajouter
-                                    </a>
-                                </div>
+
+                                @if ($filiere->niveaux && count($filiere->niveaux) > 0)
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Niveau</th>
+                                                    <th>Nombre de Cours</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($filiere->niveaux as $niveau)
+                                                    @php
+                                                        $nbCours = $filiere->emploisDuTemps()
+                                                            ->where('niveau_id', $niveau->id)
+                                                            ->count();
+                                                    @endphp
+                                                    <tr>
+                                                        <td>{{ $niveau->intitule }}</td>
+                                                        <td><span class="badge bg-info">{{ $nbCours }}</span></td>
+                                                        <td>
+                                                            <a href="{{ route('gestion.emploi_du_temps.show_niveau', ['filiere' => $filiere, 'niveau' => $niveau]) }}" 
+                                                               class="btn btn-sm btn-primary">
+                                                                <i class="bi bi-eye"></i> Voir
+                                                            </a>
+                                                            <a href="{{ route('gestion.emploi_du_temps.create_niveau', ['filiere' => $filiere, 'niveau' => $niveau]) }}" 
+                                                               class="btn btn-sm btn-success">
+                                                                <i class="bi bi-plus"></i> Ajouter
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="alert alert-warning mb-0">
+                                        <i class="bi bi-exclamation-triangle"></i> Aucun niveau défini pour cette filière.
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -53,3 +85,4 @@
     </div>
 </div>
 @endsection
+

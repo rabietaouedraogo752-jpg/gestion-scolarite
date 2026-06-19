@@ -33,12 +33,20 @@ Route::get('/admin/tableau_bord', function () {
 Route::get('/etudiant/tableau_bord', function () {
     $user = auth()->user();
     $etudiant = $user ? $user->etudiant : null;
-    $emplois = $etudiant && $etudiant->filiere ? $etudiant->filiere->emploisDuTemps()->orderBy('jour')->orderBy('heure_debut')->get() : [];
+    $emplois = $etudiant && $etudiant->filiere ? $etudiant->filiere->emploisDuTemps()
+        ->where('niveau_id', $etudiant->niveau_id)
+        ->orderBy('jour')
+        ->orderBy('heure_debut')
+        ->get() : [];
     return view('etudiant.tableau_bord', compact('emplois', 'etudiant'));
 })->name('etudiant.tableau_bord');
 
-Route::get('/enseignant/tableau_bord', function () { return view('enseignant.tableau_bord'); });
-Route::get('/departement/tableau_bord', function () { return view('departement.tableau_bord'); });
+Route::get('/enseignant/tableau_bord', [\App\Http\Controllers\EnseignantEmploiDuTempsController::class, 'index'])
+    ->middleware('auth')
+    ->name('enseignant.tableau_bord');
+Route::get('/departement/tableau_bord', [\App\Http\Controllers\DepartementDashboardController::class, 'index'])->name('departement.tableau_bord');
+Route::post('/departement/filieres', [\App\Http\Controllers\DepartementDashboardController::class, 'storeFiliere'])->name('departement.filieres.store');
+Route::post('/departement/calendriers-evaluations', [\App\Http\Controllers\DepartementDashboardController::class, 'storeCalendrierEvaluation'])->name('departement.calendriers_evaluations.store');
 Route::get('/admin/compte', function () { return view('admin.compte'); });
 use App\Http\Controllers\Gestion\EtudiantController;
 use App\Http\Controllers\Gestion\EnseignantController;
@@ -109,8 +117,12 @@ Route::post('/gestion/import/departements', [DepartementController::class, 'impo
 
 // Routes d'emploi du temps (Chef de département)
 Route::get('/gestion/emploi-du-temps', [EmploiDuTempsController::class, 'index'])->name('gestion.emploi_du_temps.index');
-Route::get('/gestion/emploi-du-temps/{filiere}', [EmploiDuTempsController::class, 'show'])->name('gestion.emploi_du_temps.show');
+// Routes avec 2 paramètres AVANT celles avec 1 seul paramètre
+Route::get('/gestion/emploi-du-temps/{filiere}/{niveau}/creer', [EmploiDuTempsController::class, 'create'])->name('gestion.emploi_du_temps.create_niveau');
+Route::get('/gestion/emploi-du-temps/{filiere}/{niveau}', [EmploiDuTempsController::class, 'show'])->name('gestion.emploi_du_temps.show_niveau');
+// Puis les routes avec 1 paramètre
 Route::get('/gestion/emploi-du-temps/{filiere}/creer', [EmploiDuTempsController::class, 'create'])->name('gestion.emploi_du_temps.create');
+Route::get('/gestion/emploi-du-temps/{filiere}', [EmploiDuTempsController::class, 'show'])->name('gestion.emploi_du_temps.show');
 Route::post('/gestion/emploi-du-temps/{filiere}', [EmploiDuTempsController::class, 'store'])->name('gestion.emploi_du_temps.store');
 Route::get('/gestion/emploi-du-temps/{emploi}/editer', [EmploiDuTempsController::class, 'edit'])->name('gestion.emploi_du_temps.edit');
 Route::put('/gestion/emploi-du-temps/{emploi}', [EmploiDuTempsController::class, 'update'])->name('gestion.emploi_du_temps.update');

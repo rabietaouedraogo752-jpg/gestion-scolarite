@@ -21,6 +21,21 @@
                 @method('PUT')
 
                 <div class="mb-3">
+                    <label for="niveau_id" class="form-label">Niveau</label>
+                    <select name="niveau_id" id="niveau_id" class="form-select @error('niveau_id') is-invalid @enderror" required>
+                        <option value="">-- Sélectionner un niveau --</option>
+                        @foreach ($niveaux as $niv)
+                            <option value="{{ $niv->id }}" {{ old('niveau_id', $emploi->niveau_id) == $niv->id ? 'selected' : '' }}>
+                                {{ $niv->intitule }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('niveau_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
                     <label for="jour" class="form-label">Jour de la semaine</label>
                     <select name="jour" id="jour" class="form-select @error('jour') is-invalid @enderror" required>
                         <option value="">-- Sélectionner un jour --</option>
@@ -70,8 +85,23 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="enseignant" class="form-label">Enseignant</label>
-                    <input type="text" name="enseignant" id="enseignant" class="form-control @error('enseignant') is-invalid @enderror" value="{{ old('enseignant', $emploi->enseignant) }}" required>
+                    <label for="enseignant_id" class="form-label">Enseignant</label>
+                    <select name="enseignant_id" id="enseignant_id" class="form-select @error('enseignant_id') is-invalid @enderror">
+                        <option value="">-- Sélectionner un enseignant --</option>
+                        @foreach ($enseignants as $ens)
+                            <option value="{{ $ens->id }}" {{ old('enseignant_id', $emploi->enseignant_id) == $ens->id ? 'selected' : '' }}>
+                                {{ $ens->user->name ?? 'Enseignant ' . $ens->id }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('enseignant_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="enseignant" class="form-label">Ou saisir le nom de l'enseignant</label>
+                    <input type="text" name="enseignant" id="enseignant" class="form-control @error('enseignant') is-invalid @enderror" value="{{ old('enseignant', $emploi->enseignant) }}" placeholder="Nom alternatif de l'enseignant">
                     @error('enseignant')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -81,12 +111,19 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check"></i> Mettre à jour
                     </button>
-                    <a href="{{ route('gestion.emploi_du_temps.show', $filiere) }}" class="btn btn-secondary">
-                        <i class="bi bi-x"></i> Annuler
-                    </a>
+                    @if ($niveau)
+                        <a href="{{ route('gestion.emploi_du_temps.show_niveau', ['filiere' => $filiere, 'niveau' => $niveau]) }}" class="btn btn-secondary">
+                            <i class="bi bi-x"></i> Annuler
+                        </a>
+                    @else
+                        <a href="{{ route('gestion.emploi_du_temps.show', $filiere) }}" class="btn btn-secondary">
+                            <i class="bi bi-x"></i> Annuler
+                        </a>
+                    @endif
                 </div>
             </form>
         </div>
     </div>
 </div>
 @endsection
+

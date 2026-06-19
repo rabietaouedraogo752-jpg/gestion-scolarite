@@ -13,6 +13,8 @@ class EmploiDuTemps extends Model
 
     protected $fillable = [
         'filiere_id',
+        'niveau_id',
+        'enseignant_id',
         'jour',
         'heure_debut',
         'heure_fin',
@@ -21,8 +23,24 @@ class EmploiDuTemps extends Model
         'enseignant',
     ];
 
+    // Relations
     public function filiere()
     {
         return $this->belongsTo(Filiere::class);
+    }
+
+    public function niveau()
+    {
+        return $this->belongsTo(Niveau::class);
+    }
+
+    public function enseignant()
+    {
+        return $this->belongsTo(Enseignant::class);
+    }
+
+    public function enseignantModel()
+    {
+        return $this->belongsTo(Enseignant::class, 'enseignant_id');
     }
 }

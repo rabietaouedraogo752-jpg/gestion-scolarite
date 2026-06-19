@@ -31,6 +31,7 @@ class EnseignantController extends Controller
             'name',
             'email',
             'matricule_fonctionnaire',
+            'domaine_enseignement',
             'grade',
             'telephone',
         ]);
@@ -64,6 +65,7 @@ class EnseignantController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'matricule_fonctionnaire' => 'nullable|string|max:100|unique:enseignants,matricule_fonctionnaire',
+            'domaine_enseignement' => 'nullable|string|max:150',
             'grade' => 'required|in:MA,MC,PT,Vacataire',
             'telephone' => 'nullable|string|max:20',
         ]);
@@ -82,6 +84,7 @@ class EnseignantController extends Controller
         Enseignant::create([
             'user_id' => $user->id,
             'matricule_fonctionnaire' => $data['matricule_fonctionnaire'] ?? null,
+            'domaine_enseignement' => $data['domaine_enseignement'] ?? null,
             'grade' => $data['grade'],
             'telephone' => $data['telephone'] ?? null,
             'generated_password' => $plainPassword,
@@ -101,6 +104,7 @@ class EnseignantController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,'.$enseignant->user_id,
             'matricule_fonctionnaire' => 'nullable|string|max:100|unique:enseignants,matricule_fonctionnaire,'.$enseignant->id,
+            'domaine_enseignement' => 'nullable|string|max:150',
             'grade' => 'required|in:MA,MC,PT,Vacataire',
             'telephone' => 'nullable|string|max:20',
         ]);
@@ -114,6 +118,7 @@ class EnseignantController extends Controller
 
         $enseignant->update([
             'matricule_fonctionnaire' => $data['matricule_fonctionnaire'] ?? null,
+            'domaine_enseignement' => $data['domaine_enseignement'] ?? null,
             'grade' => $data['grade'],
             'telephone' => $data['telephone'] ?? null,
         ]);

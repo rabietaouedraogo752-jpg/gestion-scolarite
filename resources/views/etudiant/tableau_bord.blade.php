@@ -153,7 +153,7 @@
                         'sunday' => 'dimanche'
                     ];
                     $todayFr = $dayMap[$today] ?? 'lundi';
-                    $emploisAujourdhui = $emplois->filter(fn($e) => strtolower($e->jour) === $todayFr);
+                    $emploisAujourdhui = collect($emplois)->filter(fn($e) => strtolower($e->jour) === $todayFr);
                 @endphp
 
                 @if ($emploisAujourdhui->count() > 0)
@@ -194,7 +194,7 @@
                     Emploi du temps hebdomadaire
                 </h5>
 
-                @if ($emplois->count() > 0)
+                @if (collect($emplois)->count() > 0)
                     <table class="table table-bordered table-hover text-center">
 
                         <thead class="table-primary">
@@ -225,7 +225,7 @@
                                     @foreach ($jours as $jour)
                                         <td>
                                             @php
-                                                $cours = $emplois->filter(function($e) use ($jour, $heure) {
+                                                $cours = collect($emplois)->filter(function($e) use ($jour, $heure) {
                                                     return strtolower($e->jour) === $jour && (int)substr($e->heure_debut, 0, 2) === $heure;
                                                 })->first();
                                             @endphp

@@ -14,11 +14,17 @@ class Enseignant extends Model
         'matricule_fonctionnaire',
         'grade',
         'telephone',
+        'domaine_enseignement',
         'generated_password',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function emploisDuTemps()
+    {
+        return $this->hasMany(EmploiDuTemps::class);
     }
 }

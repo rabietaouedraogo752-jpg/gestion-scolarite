@@ -50,6 +50,10 @@
             <label class="form-label">Matricule fonctionnaire</label>
             <input type="text" name="matricule_fonctionnaire" class="form-control" value="{{ old('matricule_fonctionnaire', $prefill['matricule_fonctionnaire'] ?? request('matricule_fonctionnaire')) }}">
         </div>
+        <div class="mb-3">
+            <label class="form-label">Domaine d'enseignement</label>
+            <input type="text" name="domaine_enseignement" class="form-control" value="{{ old('domaine_enseignement', $prefill['domaine_enseignement'] ?? request('domaine_enseignement')) }}" placeholder="Ex: Bases de données, Réseaux, Mathématiques">
+        </div>
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label class="form-label">Grade</label>

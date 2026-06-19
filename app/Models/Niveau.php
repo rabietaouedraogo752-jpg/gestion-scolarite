@@ -15,4 +15,14 @@ class Niveau extends Model
     {
         return $this->hasMany(Etudiant::class);
     }
+
+    public function emploisDuTemps()
+    {
+        return $this->hasMany(EmploiDuTemps::class);
+    }
+
+    public function filieres()
+    {
+        return $this->belongsToMany(Filiere::class, 'filiere_niveau')->withTimestamps();
+    }
 }
