@@ -98,32 +98,65 @@
 
                 <!-- Tableau hebdomadaire en grille -->
                 @if ($emplois->count() > 0)
+                    @php
+                        // Construit une grille [jour][heure] gérant la durée réelle des cours.
+                        $grille = [];
+                        $occupe = [];
+                        $heureMin = 23;
+                        $heureMax = 8;
+
+                        foreach ($emplois as $emploi) {
+                            $jourCours = strtolower($emploi->jour);
+                            $debut = (int) substr($emploi->heure_debut, 0, 2);
+                            $fin = max($debut + 1, (int) ceil((int) substr($emploi->heure_fin, 0, 2) + (((int) substr($emploi->heure_fin, 3, 2)) > 0 ? 1 : 0)));
+
+                            $grille[$jourCours][$debut] = [
+                                'emploi' => $emploi,
+                                'duree' => max(1, $fin - $debut),
+                            ];
+
+                            for ($h = $debut; $h < $fin; $h++) {
+                                $occupe[$jourCours][$h] = true;
+                            }
+
+                            $heureMin = min($heureMin, $debut);
+                            $heureMax = max($heureMax, $fin);
+                        }
+
+                        $heureMin = min($heureMin, 8);
+                        $heureMax = max($heureMax, 18);
+                        $joursMin = array_map('strtolower', $jours);
+                    @endphp
+
                     <h4 class="mt-5 mb-3">Vue Hebdomadaire</h4>
                     <div class="table-responsive">
-                        <table class="table table-bordered text-center">
+                        <table class="table table-bordered text-center align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Heure</th>
+                                    <th style="width: 90px;">Heure</th>
                                     @foreach ($jours as $jour)
                                         <th>{{ $jour }}</th>
                                     @endforeach
                                 </tr>
                             </thead>
                             <tbody>
-                                @for ($heure = 8; $heure < 18; $heure++)
+                                @for ($heure = $heureMin; $heure < $heureMax; $heure++)
                                     <tr>
                                         <td><strong>{{ str_pad($heure, 2, '0', STR_PAD_LEFT) }}h00</strong></td>
-                                        @foreach ($jours as $jour)
-                                            <td>
-                                                @foreach ($emplois as $emploi)
-                                                    @if (strtolower($emploi->jour) === strtolower($jour) && (int)substr($emploi->heure_debut, 0, 2) === $heure)
-                                                        <div class="bg-primary text-white p-2 rounded">
-                                                            <small><strong>{{ $emploi->matiere }}</strong></small><br>
-                                                            <small>{{ $emploi->salle }}</small>
-                                                        </div>
-                                                    @endif
-                                                @endforeach
-                                            </td>
+                                        @foreach ($joursMin as $jourMin)
+                                            @if (isset($grille[$jourMin][$heure]))
+                                                @php $bloc = $grille[$jourMin][$heure]; $cours = $bloc['emploi']; @endphp
+                                                <td rowspan="{{ $bloc['duree'] }}" class="p-1">
+                                                    <div class="bg-primary text-white p-2 rounded h-100">
+                                                        <small><strong>{{ $cours->matiere }}</strong></small><br>
+                                                        <small><i class="bi bi-clock"></i> {{ substr($cours->heure_debut, 0, 5) }}-{{ substr($cours->heure_fin, 0, 5) }}</small><br>
+                                                        <small><i class="bi bi-door-closed"></i> {{ $cours->salle }}</small><br>
+                                                        <small><i class="bi bi-person"></i> {{ $cours->enseignantModel?->user?->name ?? $cours->getAttribute('enseignant') ?? 'Non assigné' }}</small>
+                                                    </div>
+                                                </td>
+                                            @elseif (empty($occupe[$jourMin][$heure]))
+                                                <td></td>
+                                            @endif
                                         @endforeach
                                     </tr>
                                 @endfor

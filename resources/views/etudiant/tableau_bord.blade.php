@@ -250,6 +250,10 @@
 
             </div>
 
+            <div class="mt-4">
+                @include('partials.espace_info')
+            </div>
+
         </div>
 
     </div>

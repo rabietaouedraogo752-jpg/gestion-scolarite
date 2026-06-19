@@ -44,6 +44,7 @@
                 <li><a class="nav-link" href="{{ route('gestion.emploi_du_temps.index') }}"><i class="bi bi-calendar3 me-2"></i> Emploi du temps</a></li>
                 <li><a class="nav-link {{ $activeTab === 'vacations' ? 'active' : '' }}" href="{{ route('departement.tableau_bord', ['tab' => 'vacations']) }}"><i class="bi bi-clipboard-check me-2"></i> Vacations</a></li>
                 <li><a class="nav-link {{ $activeTab === 'evaluations' ? 'active' : '' }}" href="{{ route('departement.tableau_bord', ['tab' => 'evaluations']) }}"><i class="bi bi-bar-chart me-2"></i> Évaluations</a></li>
+                <li><a class="nav-link {{ $activeTab === 'info' ? 'active' : '' }}" href="{{ route('departement.tableau_bord', ['tab' => 'info']) }}"><i class="bi bi-megaphone me-2"></i> Espace Info</a></li>
             </ul>
         </aside>
 
@@ -118,7 +119,7 @@
                             <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-book text-success me-2"></i> Filières de formation</h5></div>
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light"><tr><th>Filière</th><th>Niveaux</th><th>Étudiants</th><th>Cours</th></tr></thead>
+                                    <thead class="table-light"><tr><th>Filière</th><th>Niveaux</th><th>Étudiants</th><th>Cours</th><th class="text-end">Actions</th></tr></thead>
                                     <tbody>
                                         @forelse ($filieres as $filiere)
                                             <tr>
@@ -132,9 +133,67 @@
                                                 </td>
                                                 <td>{{ $filiere->etudiants_count }}</td>
                                                 <td>{{ $filiere->emplois_du_temps_count }}</td>
+                                                <td class="text-end text-nowrap">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editFiliere{{ $filiere->id }}">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <form method="POST" action="{{ route('departement.filieres.destroy', $filiere) }}" class="d-inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer la filière « {{ $filiere->nom_filiere }} » ?')">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
                                             </tr>
+
+                                            <div class="modal fade" id="editFiliere{{ $filiere->id }}" tabindex="-1" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <form method="POST" action="{{ route('departement.filieres.update', $filiere) }}">
+                                                            @csrf
+                                                            @method('PUT')
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title">Modifier la filière</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Nom de la filière</label>
+                                                                    <input type="text" name="nom_filiere" class="form-control" value="{{ $filiere->nom_filiere }}" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Département</label>
+                                                                    <select name="ufr_id" class="form-select">
+                                                                        @foreach ($departements as $departement)
+                                                                            <option value="{{ $departement->id }}" {{ $filiere->ufr_id == $departement->id ? 'selected' : '' }}>{{ $departement->nom }}</option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                </div>
+                                                                <div class="mb-1">
+                                                                    <label class="form-label">Niveaux concernés</label>
+                                                                    <div class="row g-2">
+                                                                        @foreach ($niveaux as $niveau)
+                                                                            <div class="col-6">
+                                                                                <label class="form-check">
+                                                                                    <input class="form-check-input" type="checkbox" name="niveaux[]" value="{{ $niveau->id }}" {{ $filiere->niveaux->contains($niveau->id) ? 'checked' : '' }}>
+                                                                                    <span class="form-check-label">{{ $niveau->code_niveau }}</span>
+                                                                                </label>
+                                                                            </div>
+                                                                        @endforeach
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         @empty
-                                            <tr><td colspan="4" class="text-center text-muted py-4">Aucune filière enregistrée.</td></tr>
+                                            <tr><td colspan="5" class="text-center text-muted py-4">Aucune filière enregistrée.</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>
@@ -179,35 +238,95 @@
                     </div>
                 </div>
             @elseif ($activeTab === 'vacations')
-                <div class="card section-card shadow-sm">
-                    <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-clipboard-check text-warning me-2"></i> Vacations</h5></div>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light"><tr><th>Enseignant</th><th>Cours</th><th>Heures</th><th>Période</th><th>Statut</th></tr></thead>
-                            <tbody>
-                                @forelse ($vacations as $vacation)
-                                    <tr>
-                                        <td>{{ $vacation->enseignant->user->name ?? 'Non assigné' }}</td>
-                                        <td class="fw-semibold">{{ $vacation->matiere }}</td>
-                                        <td>{{ $vacation->nombre_heures }}h</td>
-                                        <td>{{ $vacation->periode ?? '—' }}</td>
-                                        <td><span class="badge bg-{{ $vacation->statut === 'validee' ? 'success' : ($vacation->statut === 'rejetee' ? 'danger' : 'warning text-dark') }}">{{ str_replace('_', ' ', $vacation->statut) }}</span></td>
-                                    </tr>
-                                @empty
-                                    <tr><td colspan="5" class="text-center text-muted py-4">{{ $vacationsEnabled ? 'Aucune vacation enregistrée.' : 'Lancez les migrations pour activer le module vacations.' }}</td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                <div class="row g-3">
+                    <div class="col-lg-8">
+                        <div class="card section-card shadow-sm">
+                            <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-clipboard-check text-warning me-2"></i> Demandes de vacations</h5></div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light"><tr><th>Enseignant</th><th>Cours</th><th>Heures</th><th>Période</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
+                                    <tbody>
+                                        @forelse ($vacations as $vacation)
+                                            <tr>
+                                                <td>{{ $vacation->enseignant->user->name ?? 'Non assigné' }}</td>
+                                                <td class="fw-semibold">{{ $vacation->matiere }}</td>
+                                                <td>{{ $vacation->nombre_heures }}h</td>
+                                                <td>{{ $vacation->periode ?? '—' }}</td>
+                                                <td><span class="badge bg-{{ $vacation->statut === 'validee' ? 'success' : ($vacation->statut === 'rejetee' ? 'danger' : 'warning text-dark') }}">{{ str_replace('_', ' ', $vacation->statut) }}</span></td>
+                                                <td class="text-end text-nowrap">
+                                                    @if ($vacation->statut === 'en_attente')
+                                                        <form method="POST" action="{{ route('departement.vacations.valider', $vacation) }}" class="d-inline">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Valider</button>
+                                                        </form>
+                                                        <form method="POST" action="{{ route('departement.vacations.rejeter', $vacation) }}" class="d-inline">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-x-lg"></i> Rejeter</button>
+                                                        </form>
+                                                    @else
+                                                        <span class="text-muted small">Traitée</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="6" class="text-center text-muted py-4">{{ $vacationsEnabled ? 'Aucune vacation enregistrée.' : 'Lancez les migrations pour activer le module vacations.' }}</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card section-card shadow-sm">
+                            <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-plus-circle text-primary me-2"></i> Nouvelle demande</h5></div>
+                            <div class="card-body">
+                                <form method="POST" action="{{ route('departement.vacations.store') }}">
+                                    @csrf
+                                    <div class="mb-3">
+                                        <label class="form-label">Enseignant</label>
+                                        <select name="enseignant_id" class="form-select" @disabled(!$vacationsEnabled)>
+                                            <option value="">Non assigné</option>
+                                            @foreach ($enseignants as $enseignant)
+                                                <option value="{{ $enseignant->id }}">{{ $enseignant->user->name ?? 'Enseignant #'.$enseignant->id }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Matière / Cours</label>
+                                        <input type="text" name="matiere" class="form-control" value="{{ old('matiere') }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Nombre d'heures</label>
+                                        <input type="number" name="nombre_heures" class="form-control" min="1" value="{{ old('nombre_heures', 1) }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Période</label>
+                                        <input type="text" name="periode" class="form-control" value="{{ old('periode') }}" placeholder="Ex: Semestre 1">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100" @disabled(!$vacationsEnabled)><i class="bi bi-send me-1"></i> Soumettre la demande</button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             @elseif ($activeTab === 'evaluations')
                 <div class="row g-3">
                     <div class="col-lg-7">
                         <div class="card section-card shadow-sm h-100">
-                            <div class="card-header bg-white"><h5 class="mb-0"><i class="bi bi-calendar-check text-danger me-2"></i> Calendriers d'évaluations</h5></div>
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <h5 class="mb-0"><i class="bi bi-calendar-check text-danger me-2"></i> Calendriers d'évaluations</h5>
+                                @if ($calendriersEnabled && $calendriers->count() > 0)
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{{ route('departement.calendriers_evaluations.export.excel') }}" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+                                        <a href="{{ route('departement.calendriers_evaluations.export.pdf') }}" class="btn btn-outline-danger"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+                                        <a href="{{ route('departement.calendriers_evaluations.export.word') }}" class="btn btn-outline-primary"><i class="bi bi-file-earmark-word"></i> Word</a>
+                                        <a href="{{ route('departement.calendriers_evaluations.export.html') }}" class="btn btn-outline-secondary"><i class="bi bi-filetype-html"></i> HTML</a>
+                                    </div>
+                                @endif
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light"><tr><th>Intitulé</th><th>Filière</th><th>Niveau</th><th>Type</th><th>Période</th></tr></thead>
+                                    <thead class="table-light"><tr><th>Intitulé</th><th>Filière</th><th>Niveau</th><th>Type</th><th>Période</th><th class="text-end">Partage</th></tr></thead>
                                     <tbody>
                                         @forelse ($calendriers as $calendrier)
                                             <tr>
@@ -216,9 +335,18 @@
                                                 <td>{{ $calendrier->niveau->code_niveau ?? '—' }}</td>
                                                 <td>{{ $calendrier->type }}</td>
                                                 <td>{{ $calendrier->date_debut?->format('d/m/Y') }} - {{ $calendrier->date_fin?->format('d/m/Y') }}</td>
+                                                <td class="text-end">
+                                                    <form method="POST" action="{{ route('departement.calendriers_evaluations.partager', $calendrier) }}" class="d-inline">
+                                                        @csrf
+                                                        <input type="hidden" name="visibilite" value="public">
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary" title="Partager dans l'espace info">
+                                                            <i class="bi bi-share"></i> Partager
+                                                        </button>
+                                                    </form>
+                                                </td>
                                             </tr>
                                         @empty
-                                            <tr><td colspan="5" class="text-center text-muted py-4">{{ $calendriersEnabled ? 'Aucun calendrier créé.' : 'Lancez les migrations pour activer le module évaluations.' }}</td></tr>
+                                            <tr><td colspan="6" class="text-center text-muted py-4">{{ $calendriersEnabled ? 'Aucun calendrier créé.' : 'Lancez les migrations pour activer le module évaluations.' }}</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>
@@ -281,6 +409,8 @@
                         </div>
                     </div>
                 </div>
+            @elseif ($activeTab === 'info')
+                @include('partials.espace_info')
             @else
                 <div class="row g-3">
                     <div class="col-lg-7">
