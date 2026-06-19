@@ -46,7 +46,28 @@ Route::get('/enseignant/tableau_bord', [\App\Http\Controllers\EnseignantEmploiDu
     ->name('enseignant.tableau_bord');
 Route::get('/departement/tableau_bord', [\App\Http\Controllers\DepartementDashboardController::class, 'index'])->name('departement.tableau_bord');
 Route::post('/departement/filieres', [\App\Http\Controllers\DepartementDashboardController::class, 'storeFiliere'])->name('departement.filieres.store');
+Route::put('/departement/filieres/{filiere}', [\App\Http\Controllers\DepartementDashboardController::class, 'updateFiliere'])->name('departement.filieres.update');
+Route::delete('/departement/filieres/{filiere}', [\App\Http\Controllers\DepartementDashboardController::class, 'destroyFiliere'])->name('departement.filieres.destroy');
 Route::post('/departement/calendriers-evaluations', [\App\Http\Controllers\DepartementDashboardController::class, 'storeCalendrierEvaluation'])->name('departement.calendriers_evaluations.store');
+
+// Vacations (Chef de département) : demande, validation, rejet
+Route::post('/departement/vacations', [\App\Http\Controllers\DepartementDashboardController::class, 'storeVacation'])->name('departement.vacations.store');
+Route::post('/departement/vacations/{vacation}/valider', [\App\Http\Controllers\DepartementDashboardController::class, 'validerVacation'])->name('departement.vacations.valider');
+Route::post('/departement/vacations/{vacation}/rejeter', [\App\Http\Controllers\DepartementDashboardController::class, 'rejeterVacation'])->name('departement.vacations.rejeter');
+
+// Exports des calendriers d'évaluations + partage dans l'espace info
+Route::get('/departement/calendriers-evaluations/export/excel', [\App\Http\Controllers\DepartementDashboardController::class, 'exportCalendriersExcel'])->name('departement.calendriers_evaluations.export.excel');
+Route::get('/departement/calendriers-evaluations/export/pdf', [\App\Http\Controllers\DepartementDashboardController::class, 'exportCalendriersPdf'])->name('departement.calendriers_evaluations.export.pdf');
+Route::get('/departement/calendriers-evaluations/export/word', [\App\Http\Controllers\DepartementDashboardController::class, 'exportCalendriersWord'])->name('departement.calendriers_evaluations.export.word');
+Route::get('/departement/calendriers-evaluations/export/html', [\App\Http\Controllers\DepartementDashboardController::class, 'exportCalendriersHtml'])->name('departement.calendriers_evaluations.export.html');
+Route::post('/departement/calendriers-evaluations/{calendrier}/partager', [\App\Http\Controllers\DepartementDashboardController::class, 'partagerCalendrier'])->name('departement.calendriers_evaluations.partager');
+
+// Espace info (partagé par tous les tableaux de bord)
+Route::middleware('auth')->group(function () {
+    Route::post('/informations', [\App\Http\Controllers\InformationController::class, 'store'])->name('informations.store');
+    Route::delete('/informations/{information}', [\App\Http\Controllers\InformationController::class, 'destroy'])->name('informations.destroy');
+});
+
 Route::get('/admin/compte', function () { return view('admin.compte'); });
 use App\Http\Controllers\Gestion\EtudiantController;
 use App\Http\Controllers\Gestion\EnseignantController;
