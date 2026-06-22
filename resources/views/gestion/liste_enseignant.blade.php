@@ -72,10 +72,10 @@
                             <i class="bi bi-download me-2"></i> Exporter
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ route('gestion.export.enseignants.excel', request()->only('grade')) }}"><i class="bi bi-file-earmark-excel me-2"></i> Excel (.xlsx)</a></li>
-                            <li><a class="dropdown-item" href="{{ route('gestion.export.enseignants.pdf', request()->only('grade')) }}"><i class="bi bi-file-earmark-pdf me-2"></i> PDF</a></li>
-                            <li><a class="dropdown-item" href="{{ route('gestion.export.enseignants.word', request()->only('grade')) }}"><i class="bi bi-file-earmark-word me-2"></i> Word (.docx)</a></li>
-                            <li><a class="dropdown-item" href="{{ route('gestion.export.enseignants.html', request()->only('grade')) }}"><i class="bi bi-file-earmark-code me-2"></i> HTML</a></li>
+                            <li><a class="dropdown-item" href="{{ route('gestion.export.enseignants.excel', request()->only(['grade', 'ufr_institut_id'])) }}"><i class="bi bi-file-earmark-excel me-2"></i> Excel (.xlsx)</a></li>
+                            <li><a class="dropdown-item" href="{{ route('gestion.export.enseignants.pdf', request()->only(['grade', 'ufr_institut_id'])) }}"><i class="bi bi-file-earmark-pdf me-2"></i> PDF</a></li>
+                            <li><a class="dropdown-item" href="{{ route('gestion.export.enseignants.word', request()->only(['grade', 'ufr_institut_id'])) }}"><i class="bi bi-file-earmark-word me-2"></i> Word (.docx)</a></li>
+                            <li><a class="dropdown-item" href="{{ route('gestion.export.enseignants.html', request()->only(['grade', 'ufr_institut_id'])) }}"><i class="bi bi-file-earmark-code me-2"></i> HTML</a></li>
                         </ul>
                     </div>
                 </div>
@@ -93,6 +93,19 @@
                         @endforeach
                     </select>
                 </div>
+                
+                <div class="col-md-4 mb-2">
+                    <label class="form-label small text-muted">Filtrer par Département (UFR)</label>
+                    <select id="filterDepartement" name="ufr_institut_id" class="form-select">
+                        <option value="">Tous les départements</option>
+                        @foreach($departements ?? [] as $dept)
+                            <option value="{{ $dept->id }}" @selected((string) request('ufr_institut_id') === (string) $dept->id)>
+                                {{ $dept->nom }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div class="col-md-4 d-flex align-items-end gap-2 mb-2">
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-funnel me-2"></i> Filtrer
@@ -110,7 +123,7 @@
                             <th>Email</th>
                             <th>Accès</th>
                             <th>Matricule</th>
-                            <th>Grade</th>
+                            <th>Département</th> <th>Grade</th>
                             <th>Téléphone</th>
                             <th>Statut</th>
                             <th>Actions</th>
@@ -127,18 +140,29 @@
                                     <div><strong>Mot de passe:</strong> {{ $enseignant->generated_password ?? '—' }}</div>
                                 </td>
                                 <td>{{ $enseignant->matricule_fonctionnaire ?? '—' }}</td>
+                                
+                                <td>
+                                    @if($enseignant->ufrInstitut)
+                                        <span class="badge bg-secondary">{{ $enseignant->ufrInstitut->nom }}</span>
+                                    @else
+                                        <span class="text-muted small">Non assigné</span>
+                                    @endif
+                                </td>
+
                                 <td><span class="badge bg-info text-dark">{{ $enseignant->grade ?? '—' }}</span></td>
                                 <td>{{ $enseignant->telephone ?? '—' }}</td>
                                 <td><span class="badge bg-success">Actif</span></td>
                                 <td>
-                                    <a href="{{ route('gestion.editer_enseignant', $enseignant) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-pencil-square"></i> Modifier
-                                    </a>
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ route('gestion.editer_enseignant', $enseignant) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil-square"></i> Modifier
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center">Aucun enseignant trouvé.</td>
+                                <td colspan="10" class="text-center">Aucun enseignant trouvé.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -177,7 +201,12 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const filtersForm = document.getElementById('teacherFilters');
+            
+            // Soumission automatique lors du changement de filtre
             document.getElementById('filterGrade').addEventListener('change', function () {
+                filtersForm.submit();
+            });
+            document.getElementById('filterDepartement').addEventListener('change', function () {
                 filtersForm.submit();
             });
         });

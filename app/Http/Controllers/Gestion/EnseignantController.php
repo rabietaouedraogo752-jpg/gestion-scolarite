@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Gestion;
 use App\Http\Controllers\Controller;
 use App\Models\Enseignant;
 use App\Models\User;
+use App\Models\UfrInstitut; // <-- AJOUTÉ
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -16,11 +17,15 @@ use App\Imports\EnseignantsImport;
 
 class EnseignantController extends Controller
 {
-    private function enseignantsQuery(?string $grade = null)
+    // AJUSTÉ : Prise en compte du filtrage par département
+    private function enseignantsQuery(?string $grade = null, ?string $ufrInstitutId = null)
     {
-        return Enseignant::with('user')
+        return Enseignant::with(['user', 'ufrInstitut'])
             ->when($grade, function ($query) use ($grade) {
                 $query->where('grade', $grade);
+            })
+            ->when($ufrInstitutId, function ($query) use ($ufrInstitutId) {
+                $query->where('ufr_institut_id', $ufrInstitutId);
             })
             ->orderBy('id', 'desc');
     }
@@ -34,21 +39,27 @@ class EnseignantController extends Controller
             'domaine_enseignement',
             'grade',
             'telephone',
+            'ufr_institut_id', // <-- AJOUTÉ
         ]);
 
-        return view('gestion.creer_enseignant', compact('prefill'));
+        $departements = UfrInstitut::orderBy('nom')->get(); // <-- AJOUTÉ pour le formulaire
+
+        return view('gestion.creer_enseignant', compact('prefill', 'departements'));
     }
 
     public function edit(Enseignant $enseignant)
     {
-        return view('gestion.editer_enseignant', compact('enseignant'));
+        $departements = UfrInstitut::orderBy('nom')->get(); // <-- AJOUTÉ pour le formulaire
+        return view('gestion.editer_enseignant', compact('enseignant', 'departements'));
     }
 
     public function index(Request $request)
     {
         $grade = $request->query('grade');
+        $ufrInstitutId = $request->query('ufr_institut_id'); // <-- AJOUTÉ
 
-        $enseignants = $this->enseignantsQuery($grade)->get();
+        // AJUSTÉ avec le deuxième paramètre de filtrage
+        $enseignants = $this->enseignantsQuery($grade, $ufrInstitutId)->get();
 
         $grades = Enseignant::query()
             ->whereNotNull('grade')
@@ -56,7 +67,9 @@ class EnseignantController extends Controller
             ->orderBy('grade')
             ->pluck('grade');
 
-        return view('gestion.liste_enseignant', compact('enseignants', 'grades', 'grade'));
+        $departements = UfrInstitut::orderBy('nom')->get(); // <-- AJOUTÉ pour alimenter le select de l'interface
+
+        return view('gestion.liste_enseignant', compact('enseignants', 'grades', 'grade', 'departements', 'ufrInstitutId'));
     }
 
     public function store(Request $request)
@@ -68,6 +81,7 @@ class EnseignantController extends Controller
             'domaine_enseignement' => 'nullable|string|max:150',
             'grade' => 'required|in:MA,MC,PT,Vacataire',
             'telephone' => 'nullable|string|max:20',
+            'ufr_institut_id' => 'nullable|exists:ufr_instituts,id', // <-- AJOUTÉ : Validation du département
         ]);
 
         $username = strtolower(str_replace(' ', '.', $data['name'])) . '.' . Str::random(3);
@@ -83,6 +97,7 @@ class EnseignantController extends Controller
 
         Enseignant::create([
             'user_id' => $user->id,
+            'ufr_institut_id' => $data['ufr_institut_id'] ?? null, // <-- AJOUTÉ
             'matricule_fonctionnaire' => $data['matricule_fonctionnaire'] ?? null,
             'domaine_enseignement' => $data['domaine_enseignement'] ?? null,
             'grade' => $data['grade'],
@@ -107,6 +122,7 @@ class EnseignantController extends Controller
             'domaine_enseignement' => 'nullable|string|max:150',
             'grade' => 'required|in:MA,MC,PT,Vacataire',
             'telephone' => 'nullable|string|max:20',
+            'ufr_institut_id' => 'nullable|exists:ufr_instituts,id', // <-- AJOUTÉ : Validation du département
         ]);
 
         if ($enseignant->user) {
@@ -117,6 +133,7 @@ class EnseignantController extends Controller
         }
 
         $enseignant->update([
+            'ufr_institut_id' => $data['ufr_institut_id'] ?? null, // <-- AJOUTÉ
             'matricule_fonctionnaire' => $data['matricule_fonctionnaire'] ?? null,
             'domaine_enseignement' => $data['domaine_enseignement'] ?? null,
             'grade' => $data['grade'],
@@ -130,12 +147,14 @@ class EnseignantController extends Controller
 
     public function exportExcel(Request $request)
     {
-        return Excel::download(new \App\Exports\EnseignantsExport($request->query('grade')), 'enseignants_'.date('Y-m-d').'.xlsx');
+        // AJUSTÉ : Ajout du filtrage département à l'export
+        return Excel::download(new \App\Exports\EnseignantsExport($request->query('grade'), $request->query('ufr_institut_id')), 'enseignants_'.date('Y-m-d').'.xlsx');
     }
 
     public function exportPdf(Request $request)
     {
-        $enseignants = $this->enseignantsQuery($request->query('grade'))->get();
+        // AJUSTÉ
+        $enseignants = $this->enseignantsQuery($request->query('grade'), $request->query('ufr_institut_id'))->get();
         $pdf = PDF::loadView('gestion.exports.enseignants_pdf', compact('enseignants'));
 
         return $pdf->download('enseignants_'.date('Y-m-d').'.pdf');
@@ -143,7 +162,8 @@ class EnseignantController extends Controller
 
     public function exportWord(Request $request)
     {
-        $enseignants = $this->enseignantsQuery($request->query('grade'))->get();
+        // AJUSTÉ
+        $enseignants = $this->enseignantsQuery($request->query('grade'), $request->query('ufr_institut_id'))->get();
         $phpWord = new PhpWord();
         $section = $phpWord->addSection();
 
@@ -155,6 +175,7 @@ class EnseignantController extends Controller
         $table->addCell()->addText('Nom', ['bold' => true]);
         $table->addCell()->addText('Email', ['bold' => true]);
         $table->addCell()->addText('Nom d\'utilisateur', ['bold' => true]);
+        $table->addCell()->addText('Département', ['bold' => true]); // <-- AJOUTÉ
         $table->addCell()->addText('Matricule', ['bold' => true]);
         $table->addCell()->addText('Grade', ['bold' => true]);
         $table->addCell()->addText('Téléphone', ['bold' => true]);
@@ -164,6 +185,7 @@ class EnseignantController extends Controller
             $table->addCell()->addText($enseignant->user->name ?? '—');
             $table->addCell()->addText($enseignant->user->email ?? '—');
             $table->addCell()->addText($enseignant->user->username ?? '—');
+            $table->addCell()->addText($enseignant->ufrInstitut->nom ?? '—'); // <-- AJOUTÉ
             $table->addCell()->addText($enseignant->matricule_fonctionnaire ?? '—');
             $table->addCell()->addText($enseignant->grade ?? '—');
             $table->addCell()->addText($enseignant->telephone ?? '—');
@@ -177,13 +199,15 @@ class EnseignantController extends Controller
 
     public function exportHtml(Request $request)
     {
-        $enseignants = $this->enseignantsQuery($request->query('grade'))->get();
+        // AJUSTÉ
+        $enseignants = $this->enseignantsQuery($request->query('grade'), $request->query('ufr_institut_id'))->get();
 
         return response()
             ->view('gestion.exports.enseignants_html', compact('enseignants'))
             ->header('Content-Type', 'text/html; charset=utf-8')
             ->header('Content-Disposition', 'attachment; filename="enseignants_'.date('Y-m-d').'.html"');
     }
+    
     public function import(Request $request)
     {
         $request->validate([

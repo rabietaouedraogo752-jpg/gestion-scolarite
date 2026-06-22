@@ -32,10 +32,19 @@
             <label class="form-label">Email</label>
             <input type="email" name="email" class="form-control" value="{{ old('email', $enseignant->user->email ?? '') }}" required>
         </div>
+        
         <div class="mb-3">
-            <label class="form-label">Matricule fonctionnaire</label>
-            <input type="text" name="matricule_fonctionnaire" class="form-control" value="{{ old('matricule_fonctionnaire', $enseignant->matricule_fonctionnaire) }}">
+            <label class="form-label">Département (UFR / Institut)</label>
+            <select name="ufr_institut_id" class="form-select">
+                <option value="">-- Aucun (Non assigné) --</option>
+                @foreach($departements as $dept)
+                    <option value="{{ $dept->id }}" {{ old('ufr_institut_id', $enseignant->ufr_institut_id) == $dept->id ? 'selected' : '' }}>
+                        {{ $dept->nom }}
+                    </option>
+                @endforeach
+            </select>
         </div>
+
         <div class="mb-3">
             <label class="form-label">Domaine d'enseignement</label>
             <input type="text" name="domaine_enseignement" class="form-control" value="{{ old('domaine_enseignement', $enseignant->domaine_enseignement) }}" placeholder="Ex: Bases de données, Réseaux, Mathématiques">
@@ -55,6 +64,10 @@
                 <label class="form-label">Téléphone</label>
                 <input type="text" name="telephone" class="form-control" value="{{ old('telephone', $enseignant->telephone) }}">
             </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Matricule fonctionnaire</label>
+            <input type="text" name="matricule_fonctionnaire" class="form-control" value="{{ old('matricule_fonctionnaire', $enseignant->matricule_fonctionnaire) }}">
         </div>
 
         <div class="d-flex gap-2">
