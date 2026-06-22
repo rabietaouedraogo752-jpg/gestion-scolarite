@@ -56,7 +56,11 @@ class EmploiDuTempsController extends Controller
         if ($niveaux->isEmpty()) {
             $niveaux = Niveau::orderBy('code_niveau')->get();
         }
-        $enseignants = Enseignant::with('user')->get();
+
+        // Modification ici : On filtre par le département de la filière courante
+        $enseignants = Enseignant::where('ufr_institut_id', $filiere->ufr_id)
+            ->with('user')
+            ->get();
         
         return view('gestion.emploi_du_temps.create', compact('filiere', 'niveau', 'jours', 'niveaux', 'enseignants'));
     }
@@ -98,7 +102,11 @@ class EmploiDuTempsController extends Controller
         if ($niveaux->isEmpty()) {
             $niveaux = Niveau::orderBy('code_niveau')->get();
         }
-        $enseignants = Enseignant::with('user')->get();
+
+        // Modification ici aussi : On cible le département lié à la filière du cours en édition
+        $enseignants = Enseignant::where('departement_id', $filiere->departement_id)
+            ->with('user')
+            ->get();
         
         return view('gestion.emploi_du_temps.edit', compact('emploi', 'filiere', 'niveau', 'jours', 'niveaux', 'enseignants'));
     }
