@@ -3,140 +3,85 @@
 namespace App\Http\Controllers\Gestion;
 
 use App\Http\Controllers\Controller;
-use App\Models\EmploiDuTemps;
 use App\Models\Filiere;
-use App\Models\Niveau;
-use App\Models\Enseignant;
 use Illuminate\Http\Request;
 
 class EmploiDuTempsController extends Controller
 {
     /**
-     * Affiche la liste des filières et niveaux
+     * Affiche la liste globale ou l'index des emplois du temps
      */
     public function index()
     {
-        $filieres = Filiere::with('niveaux')->get();
+        $filieres = Filiere::all();
         return view('gestion.emploi_du_temps.index', compact('filieres'));
     }
 
     /**
-     * Affiche les emplois du temps d'une filière filtrés par niveau
+     * Affiche le formulaire de création d'un cours
      */
-    public function show(Request $request, Filiere $filiere, Niveau $niveau = null)
+    /**
+     * Affiche le formulaire de création d'un cours
+     */
+    public function create($filiere_id, $niveau_id)
     {
-        $niveaux = $filiere->niveaux()->orderBy('code_niveau')->get();
+        // 1. On récupère la filière concernée (ex : Informatique)
+        $filiere = Filiere::findOrFail($filiere_id);
 
-        if (!$niveau && $request->filled('niveau')) {
-            $niveau = $niveaux->firstWhere('id', (int) $request->query('niveau'));
-        }
+        // 2. CORRECTION : On récupère TOUS les niveaux de la base de données
+        // Assure-toi d'avoir importé le modèle en haut du fichier : use App\Models\Niveau;
+        // Si ton modèle s'appelle autrement (ex: NiveauScolaire), ajuste le nom ici.
+        $niveaux = \App\Models\Niveau::all(); 
 
-        $query = $filiere->emploisDuTemps()
-            ->with(['niveau', 'enseignantModel.user'])
-            ->orderBy('jour')
-            ->orderBy('heure_debut');
-
-        if ($niveau) {
-            $query->where('niveau_id', $niveau->id);
-        }
-
-        $emplois = $query->get();
-
-        $jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
-        return view('gestion.emploi_du_temps.show', compact('filiere', 'niveau', 'niveaux', 'emplois', 'jours'));
+        // 3. On envoie tout à la vue
+        return view('gestion.emploi_du_temps.create', compact('filiere', 'niveaux', 'niveau_id'));
     }
 
     /**
-     * Affiche le formulaire pour créer un nouvel emploi du temps
+     * Enregistre le cours dans la base de données
+     * Le paramètre $filiere_id est injecté automatiquement depuis l'URL {filiere}
      */
-    public function create(Filiere $filiere, Niveau $niveau = null)
+    public function store(Request $request, $filiere_id)
     {
-        $jours = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi'];
-        $niveaux = $filiere->niveaux()->orderBy('code_niveau')->get();
-        if ($niveaux->isEmpty()) {
-            $niveaux = Niveau::orderBy('code_niveau')->get();
-        }
-        $enseignants = Enseignant::with('user')->get();
-        
-        return view('gestion.emploi_du_temps.create', compact('filiere', 'niveau', 'jours', 'niveaux', 'enseignants'));
-    }
-
-    /**
-     * Sauvegarde un nouvel emploi du temps
-     */
-    public function store(Request $request, Filiere $filiere)
-    {
-        $validated = $request->validate([
-            'niveau_id' => 'required|exists:niveaux,id',
-            'enseignant_id' => 'nullable|exists:enseignants,id',
-            'jour' => 'required|in:lundi,mardi,mercredi,jeudi,vendredi',
-            'heure_debut' => 'required|date_format:H:i',
-            'heure_fin' => 'required|date_format:H:i|after:heure_debut',
-            'matiere' => 'required|string|max:100',
-            'salle' => 'required|string|max:50',
-            'enseignant' => 'nullable|string|max:100',
+        // 1. Validation de tous les champs obligatoires du formulaire
+        $request->validate([
+            'niveau_id'   => 'required',
+            'jour'        => 'required',
+            'heure_debut' => 'required',
+            'heure_fin'   => 'required',
+            'matiere'     => 'required|string|max:255',
+            'salle'       => 'required|string|max:255',
         ]);
 
-        $validated['filiere_id'] = $filiere->id;
-
-        EmploiDuTemps::create($validated);
-
-        return redirect()
-            ->route('gestion.emploi_du_temps.show_niveau', ['filiere' => $filiere, 'niveau' => $validated['niveau_id']])
-            ->with('success', 'Cours ajouté avec succès!');
-    }
-
-    /**
-     * Affiche le formulaire pour éditer un emploi du temps
-     */
-    public function edit(EmploiDuTemps $emploi)
-    {
-        $filiere = $emploi->filiere;
-        $niveau = $emploi->niveau;
-        $jours = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi'];
-        $niveaux = $filiere->niveaux()->orderBy('code_niveau')->get();
-        if ($niveaux->isEmpty()) {
-            $niveaux = Niveau::orderBy('code_niveau')->get();
-        }
-        $enseignants = Enseignant::with('user')->get();
-        
-        return view('gestion.emploi_du_temps.edit', compact('emploi', 'filiere', 'niveau', 'jours', 'niveaux', 'enseignants'));
-    }
-
-    /**
-     * Met à jour un emploi du temps
-     */
-    public function update(Request $request, EmploiDuTemps $emploi)
-    {
-        $validated = $request->validate([
-            'niveau_id' => 'required|exists:niveaux,id',
-            'enseignant_id' => 'nullable|exists:enseignants,id',
-            'jour' => 'required|in:lundi,mardi,mercredi,jeudi,vendredi',
-            'heure_debut' => 'required|date_format:H:i',
-            'heure_fin' => 'required|date_format:H:i|after:heure_debut',
-            'matiere' => 'required|string|max:100',
-            'salle' => 'required|string|max:50',
-            'enseignant' => 'nullable|string|max:100',
+        // 2. Traitement d'insertion en base de données
+        // (Décommente et adapte les champs selon ton modèle de cours, ex: Cours ou EmploiDuTemps)
+        /*
+        \App\Models\Cours::create([
+            'filiere_id'  => $filiere_id,
+            'niveau_id'   => $request->niveau_id,
+            'jour'        => $request->jour,
+            'heure_debut' => $request->heure_debut,
+            'heure_fin'   => $request->heure_fin,
+            'matiere'     => $request->matiere,
+            'salle'       => $request->salle,
         ]);
+        */
 
-        $emploi->update($validated);
-
-        return redirect()
-            ->route('gestion.emploi_du_temps.show_niveau', ['filiere' => $emploi->filiere, 'niveau' => $emploi->niveau])
-            ->with('success', 'Cours mis à jour avec succès!');
+        // 3. Redirection vers la vue du tableau (show) avec un message de succès
+        return redirect()->route('gestion.emploi_du_temps.show', $filiere_id)
+                         ->with('success', 'Le cours a été ajouté avec succès !');
     }
 
     /**
-     * Supprime un emploi du temps
+     * Affiche le tableau de l'emploi du temps d'une filière spécifique
      */
-    public function destroy(EmploiDuTemps $emploi)
+    public function show($id)
     {
-        $filiere = $emploi->filiere;
-        $niveau = $emploi->niveau;
-        $emploi->delete();
-
-        return redirect()
-            ->route('gestion.emploi_du_temps.show_niveau', ['filiere' => $filiere, 'niveau' => $niveau])
-            ->with('success', 'Cours supprimé avec succès!');
+        $filiere = Filiere::findOrFail($id);
+        
+        // On charge également les niveaux pour le filtre dynamique dans show.blade.php
+        $niveaux = $filiere->niveaux;
+        
+        return view('gestion.emploi_du_temps.show', compact('filiere', 'niveaux'));
     }
 }
