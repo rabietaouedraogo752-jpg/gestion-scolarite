@@ -31,6 +31,8 @@ class LoginController extends Controller
             $request->session()->regenerate();
 
             $user = Auth::user();
+            
+            // Correction ici : alignement sur la valeur 'chef_departement'
             switch ($user->role) {
                 case 'admin':
                     return redirect()->intended(route('admin.tableau_bord'));
@@ -38,8 +40,8 @@ class LoginController extends Controller
                     return redirect()->intended(route('enseignant.tableau_bord'));
                 case 'etudiant':
                     return redirect()->intended(route('etudiant.tableau_bord'));
-                case 'departement':
-                    return redirect()->intended(route('departement.tableau_bord'));
+                case 'chef_departement':
+                    return redirect()->intended('/departement/tableau_bord');
                 default:
                     return redirect()->intended('/');
             }

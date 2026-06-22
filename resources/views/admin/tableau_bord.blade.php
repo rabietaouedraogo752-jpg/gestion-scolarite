@@ -19,6 +19,10 @@
     </style>
 </head>
 <body>
+    @php
+    $activeTab = request('tab', 'dashboard');
+@endphp
+
 
 <div class="container-fluid">
     <div class="row">
@@ -26,8 +30,12 @@
             <h5 class="text-center fw-bold py-3 border-bottom border-secondary">Scolarité Admin</h5>
             <ul class="nav nav-pills flex-column mb-auto mt-3 gap-2">
                 <li class="nav-item">
-                    <a href="#" class="nav-link active"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
+                   <a href="{{ request()->fullUrlWithQuery(['tab' => 'dashboard']) }}" class="nav-link {{ $activeTab === 'dashboard' ? 'active' : '' }}"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
                 </li>
+                <li>
+                   <a href="{{ request()->fullUrlWithQuery(['tab' => 'annonces']) }}" class="nav-link {{ $activeTab === 'annonces' ? 'active' : '' }}"><i class="bi bi-megaphone me-2"></i> Annonces et Infos</a>
+                </li>
+
                 <li>
                     <a href="{{ route('gestion.liste_etudiant') }}" class="nav-link"><i class="bi bi-people me-2"></i> Étudiants</a>
                 </li>
@@ -48,6 +56,8 @@
         </div>
 
         <div class="col-md-9 col-lg-10 p-4">
+            @if($activeTab === 'dashboard')
+    <div class="d-flex justify-content-between align-items-center mb-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 class="fw-bold mb-0">Tableau de bord</h2>
@@ -58,6 +68,7 @@
                     <span>Gestion de comptes</span>
                 </a>            
             </div>
+</div>
 
             <div class="row g-3 mb-4">
                 <div class="col-sm-6 col-xl-3">
@@ -170,6 +181,89 @@
                     </table>
                 </div>
             </div>
+            @elseif($activeTab === 'annonces')
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="fw-bold mb-0">Annonces & Communiqués</h2>
+                        <p class="text-muted small mb-0">Consultez les notes d'informations publiées par les départements</p>
+                    </div>
+                </div>
+
+                        <!-- Message de succès flash -->
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        <div class="row g-4">
+            <!-- COLONNE GAUCHE : FLUX DES ANNONCES EXISTANTES -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 p-4 bg-white h-100">
+                    <h5 class="fw-bold text-dark mb-4"><i class="bi bi-megaphone-fill text-primary me-2"></i> Flux d'actualités administratives</h5>
+                    <div class="row g-3">
+                        @forelse($informations as $info)
+                            <div class="col-12">
+                                <div class="p-3 rounded-3 border-start border-4 @if($info->visibilite === 'public') border-success bg-light @else border-danger bg-light @endif">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h6 class="fw-bold text-dark mb-1">{{ $info->titre }}</h6>
+                                        <span class="badge @if($info->visibilite === 'public') bg-success @else bg-danger @endif text-uppercase small" style="font-size: 0.75rem;">
+                                            {{ $info->visibilite }}
+                                        </span>
+                                    </div>
+                                    <p class="mb-2 text-muted small mt-1" style="white-space: pre-line;">{{ $info->contenu }}</p>
+                                    <div class="d-flex justify-content-between align-items-center text-mini text-muted mt-2">
+                                        <small><i class="bi bi-person-circle me-1"></i> Par : {{ $info->user->name ?? 'Chef de Département' }}</small>
+                                        <small><i class="bi bi-calendar-event me-1"></i> Le {{ $info->created_at->format('d/m/Y à H:i') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-12 text-center py-5 text-muted">
+                                <i class="bi bi-chat-left-dots fs-1"></i>
+                                <p class="mt-3 mb-0 fw-semibold">Aucun communiqué officiel diffusé à votre attention.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLONNE DROITE : FORMULAIRE DE PUBLICATION POUR L'ADMIN -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 p-4 bg-white sticky-top" style="top: 20px;">
+                    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-pencil-square text-primary me-2"></i> Publier un communiqué</h5>
+                    <form action="{{ route('admin.informations.store') }}" method="POST">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Titre de l'information</label>
+                            <input type="text" name="titre" class="form-control" placeholder="Ex: Report de la rentrée" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Contenu du message</label>
+                            <textarea name="contenu" rows="5" class="form-control" placeholder="Écrivez votre texte ici..." required></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Cible de visibilité</label>
+                            <select name="visibilite" class="form-select" required>
+                                <option value="public">🌍 Tout le monde (Public)</option>
+                                <option value="etudiant">🎓 Étudiants uniquement</option>
+                                <option value="enseignant">👨‍🏫 Enseignants uniquement</option>
+                                <option value="administration">🏢 Note interne (Administration)</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm mt-2">
+                            <i class="bi bi-send-fill me-2"></i> Diffuser le message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+            @endif
 
         </div>
     </div>

@@ -2,88 +2,151 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CalendrierEvaluation;
-use App\Models\EmploiDuTemps;
-use App\Models\Enseignant;
-use App\Models\Etudiant;
-use App\Models\Filiere;
-use App\Models\Niveau;
-use App\Models\UfrInstitut;
-use App\Models\Vacation;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Auth;
+use App\Models\UfrInstitut;
+use App\Models\Filiere;
+
+use App\Models\Information;
+use App\Models\PendingInscription;
+use App\Models\CalendrierEvaluation;
 
 class DepartementDashboardController extends Controller
 {
-    public function index()
+    public function __construct()
     {
-        $vacationsEnabled = Schema::hasTable('vacations');
-        $calendriersEnabled = Schema::hasTable('calendriers_evaluations');
-
-        $stats = [
-            'enseignants' => Enseignant::count(),
-            'cours' => EmploiDuTemps::count(),
-            'vacations' => $vacationsEnabled ? Vacation::count() : 0,
-            'alertes' => EmploiDuTemps::whereNull('enseignant_id')->count()
-                + ($vacationsEnabled ? Vacation::where('statut', 'en_attente')->count() : 0),
-        ];
-
-        return view('departement.tableau_bord', [
-            'stats' => $stats,
-            'enseignants' => Enseignant::with('user')->orderBy('id', 'desc')->get(),
-            'filieres' => Filiere::with('niveaux')->withCount(['etudiants', 'emploisDuTemps'])->orderBy('nom_filiere')->get(),
-            'niveaux' => Niveau::orderBy('code_niveau')->get(),
-            'departements' => UfrInstitut::orderBy('nom')->get(),
-            'vacations' => $vacationsEnabled
-                ? Vacation::with('enseignant.user')->orderBy('created_at', 'desc')->get()
-                : collect(),
-            'calendriers' => $calendriersEnabled
-                ? CalendrierEvaluation::with(['filiere', 'niveau'])->orderBy('date_debut', 'desc')->get()
-                : collect(),
-            'vacationsEnabled' => $vacationsEnabled,
-            'calendriersEnabled' => $calendriersEnabled,
-        ]);
+        // Sécurité : obliger la connexion pour toutes les actions
+        $this->middleware('auth');
     }
 
+    /**
+     * Affichage du tableau de bord personnel filtré
+     */
+    public function index()
+    {
+        $user = Auth::user();
+
+        // 1. Trouver le département UNIQUE de ce chef connecté
+        $departement = UfrInstitut::where('user_id', $user->id)->first();
+
+        // Secours pour les anciens départements
+        if (!$departement) {
+            $departement = UfrInstitut::where('chef_nom', $user->name)->first();
+        }
+
+        // Si aucun département n'est trouvé, on évite le crash
+        if (!$departement) {
+            return redirect()->route('login')->withErrors([
+                'username' => "Aucun département n'est lié à votre compte d'utilisateur."
+            ]);
+        }
+
+        // 2. FILTRER LES DONNÉES
+        // On récupère uniquement les filières de ce département (clé : ufr_id)
+        $filieres = Filiere::where('ufr_id', $departement->id)->get();
+        
+        // On isole les identifiants de ces filières
+        $filiereIds = $filieres->pluck('id');
+
+        // Évaluations liées uniquement aux filières de ce département
+        $calendriersEvaluations = CalendrierEvaluation::whereIn('filiere_id', $filiereIds)->get();
+
+        // Inscriptions en attente sur ces filières uniquement
+        $inscriptionsEnAttente = PendingInscription::whereIn('filiere_id', $filiereIds)
+            ->where('status', 'en_attente')
+            ->count();
+
+        // Annonces publiées par ce chef
+        $informations = Information::where('user_id', $user->id)->latest()->get();
+
+        // 3. RECUPERATION DES VACATIONS LIEES (Requis pour la ligne 501 de la vue)
+        // Récupère les vacations liées aux filières de ce département
+        $vacations = \App\Models\Vacation::whereIn('filiere_id', $filiereIds)->get();
+
+        // Variables de configuration pour la vue Blade
+        $vacationsEnabled = true; // Active les fonctionnalités de vacations sur le template
+
+        // Statistiques globales du tableau de bord
+        $stats = [
+            'enseignants' => \App\Models\Enseignant::count(), 
+            'cours'       => 0,
+            'vacations'   => $vacations->count(), // Utilise le décompte de notre collection filtrée
+            'alertes'     => $informations->count(), 
+        ];
+
+        // 4. Envoi de l'intégralité des variables à la vue
+        return view('departement.tableau_bord', compact(
+            'departement', 
+            'filieres', 
+            'calendriersEvaluations', 
+            'inscriptionsEnAttente', 
+            'informations',
+            'vacations',         // <-- Ajouté pour corriger la ligne 501
+            'vacationsEnabled',  // <-- Ajouté pour corriger la ligne 500
+            'stats'
+        ));
+    }
+    /**
+     * Enregistrer une nouvelle filière liée automatiquement à ce département
+     */
     public function storeFiliere(Request $request)
     {
         $data = $request->validate([
             'nom_filiere' => 'required|string|max:255',
-            'ufr_id' => 'nullable|exists:ufr_instituts,id',
-            'niveaux' => 'nullable|array',
-            'niveaux.*' => 'exists:niveaux,id',
         ]);
 
-        $departementId = $data['ufr_id'] ?? UfrInstitut::query()->value('id');
+        $user = Auth::user();
+        $departement = UfrInstitut::where('user_id', $user->id)->first() 
+            ?? UfrInstitut::where('chef_nom', $user->name)->first();
 
-        $filiere = Filiere::create([
+        if (!$departement) {
+            return redirect()->back()->with('error', 'Action impossible : Aucun département lié.');
+        }
+
+        Filiere::create([
             'nom_filiere' => $data['nom_filiere'],
-            'ufr_id' => $departementId,
+            'ufr_id'      => $departement->id, // Liaison automatique et sécurisée
         ]);
 
-        $filiere->niveaux()->sync($data['niveaux'] ?? []);
-
-        return redirect()
-            ->route('departement.tableau_bord', ['tab' => 'enseignements'])
-            ->with('success', 'Filière créée avec succès.');
+        return redirect()->back()->with('success', 'La filière a été ajoutée à votre département avec succès !');
     }
 
+    /**
+     * Enregistrer un calendrier d'évaluation
+     */
     public function storeCalendrierEvaluation(Request $request)
     {
+        // Adaptez les règles de validation aux colonnes réelles de votre table 'calendriers_evaluations'
         $data = $request->validate([
             'filiere_id' => 'required|exists:filieres,id',
-            'niveau_id' => 'required|exists:niveaux,id',
-            'intitule' => 'required|string|max:150',
-            'type' => 'required|string|max:50',
+            'titre'      => 'required|string|max:255',
             'date_debut' => 'required|date',
-            'date_fin' => 'required|date|after_or_equal:date_debut',
-            'description' => 'nullable|string|max:1000',
+            'date_fin'   => 'required|date|after_or_equal:date_debut',
         ]);
 
-        CalendrierEvaluation::create($data);
+       CalendrierEvaluation::create($data);
 
-        return redirect()
-            ->route('departement.tableau_bord', ['tab' => 'evaluations'])
-            ->with('success', 'Calendrier d’évaluations créé avec succès.');
+        return redirect()->back()->with('success', 'Le calendrier d\'évaluation a été programmé.');
+    }
+
+    /**
+     * Publier une annonce depuis le tableau de bord du département
+     */
+    public function storeInformation(Request $request)
+    {
+        $data = $request->validate([
+            'titre'      => 'required|string|max:255',
+            'contenu'    => 'required|string',
+            'visibilite' => 'required|in:public,etudiant,enseignant,administration',
+        ]);
+
+        Information::create([
+            'titre'      => $data['titre'],
+            'contenu'    => $data['contenu'],
+            'visibilite' => $data['visibilite'],
+            'user_id'    => Auth::id(), // Lie l'annonce à l'utilisateur connecté
+        ]);
+
+        return redirect()->back()->with('success', 'Votre annonce a été publiée.');
     }
 }

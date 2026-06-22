@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Gestion;
 use App\Http\Controllers\Controller;
 use App\Models\UfrInstitut;
 use App\Models\Universite;
+use App\Models\User; // <-- Ajouté pour créer les identifiants
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
 use PhpOffice\PhpWord\PhpWord;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash; // <-- Ajouté pour hacher le mot de passe
+use Illuminate\Support\Str; // <-- Ajouté pour générer le mot de passe
 use App\Imports\DepartementsImport;
 
 class DepartementController extends Controller
@@ -47,14 +50,17 @@ class DepartementController extends Controller
 
     public function store(Request $request)
     {
+        // 1. Validation de toutes les entrées
         $data = $request->validate([
             'code' => 'required|string|max:50|unique:ufr_instituts,code',
             'nom' => 'required|string|max:255',
+            'chef_nom' => 'nullable|string|max:255',
             'code_univ' => 'required|string|max:50',
             'nom_universite' => 'required|string|max:255',
             'ville' => 'required|string|max:100',
         ]);
 
+        // 2. Gestion ou création de l'université
         $universite = Universite::updateOrCreate(
             ['code_univ' => $data['code_univ']],
             [
@@ -63,15 +69,35 @@ class DepartementController extends Controller
             ]
         );
 
+        // 3. Génération automatique des identifiants d'accès
+    $username = strtolower(Str::slug($data['code'])) . '.chef';
+    $plainPassword = Str::random(8); // Génère le mot de passe
+        
+        $user = User::create([
+            'name' => $data['chef_nom'] ?? 'Chef ' . $data['code'],
+            'email' => $username . '@gestion-scolarite.bf', // Email généré par défaut
+            'password' => Hash::make($plainPassword),
+            'role' => 'chef_departement', // Optionnel : si vous gérez des rôles applicatifs
+        ]);
+
+        // 5. Création unique et définitive du Département (UfrInstitut)
         UfrInstitut::create([
             'universite_id' => $universite->id,
             'code' => $data['code'],
             'nom' => $data['nom'],
+            'chef_nom' => $data['chef_nom'], // Sauvegarde bien le nom du chef
+            'generated_password' => $plainPassword, // Sauvegarde du mot de passe en clair !
+            'user_id' => $user->id, // Optionnel: associe à l'user si la colonne existe
         ]);
 
+        // 6. Redirection avec passage des variables de session flash
         return redirect()
             ->route('gestion.liste_departement')
-            ->with('success', 'Département créé avec succès.');
+            ->with([
+                'success' => 'Département créé avec succès.',
+                'generated_username' => $username,
+                'generated_password' => $plainPassword
+            ]);
     }
 
     public function edit(UfrInstitut $departement)
@@ -84,6 +110,7 @@ class DepartementController extends Controller
         $data = $request->validate([
             'code' => 'required|string|max:50|unique:ufr_instituts,code,'.$departement->id,
             'nom' => 'required|string|max:255',
+            'chef_nom' => 'nullable|string|max:255',
             'code_univ' => 'required|string|max:50',
             'nom_universite' => 'required|string|max:255',
             'ville' => 'required|string|max:100',
@@ -97,10 +124,12 @@ class DepartementController extends Controller
             ]
         );
 
+        // Mise à jour propre de l'enregistrement de l'UFR / Institut
         $departement->update([
             'universite_id' => $universite->id,
             'code' => $data['code'],
             'nom' => $data['nom'],
+            'chef_nom' => $data['chef_nom'], // Enregistre le nouveau chef s'il change
         ]);
 
         return redirect()
@@ -151,6 +180,7 @@ class DepartementController extends Controller
         }, 'departements_'.date('Y-m-d').'.docx');
     }
 
+    
     public function exportHtml(Request $request)
     {
         $departements = $this->departementsQuery($request->query('universite_id'))->get();
@@ -160,6 +190,7 @@ class DepartementController extends Controller
             ->header('Content-Type', 'text/html; charset=utf-8')
             ->header('Content-Disposition', 'attachment; filename="departements_'.date('Y-m-d').'.html"');
     }
+
     public function import(Request $request)
     {
         $request->validate([
@@ -179,4 +210,5 @@ class DepartementController extends Controller
 
         return back()->with('success', 'Fichier enregistré (pas de parsing automatique pour ce type): '.$path);
     }
+    
 }

@@ -81,7 +81,9 @@
                         <tr>
                             <th>#</th>
                             <th>Code</th>
-                            <th>Nom</th>
+                            <th>Nom de département</th>
+                            <th>Chef de département</th>
+                            <th>Accès</th>
                             <th>Université</th>
                             <th>Ville</th>
                             <th>Statut</th>
@@ -94,18 +96,50 @@
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $departement->code ?? '—' }}</td>
                                 <td>{{ $departement->nom ?? '—' }}</td>
+                                <td>{{ $departement->chef_nom ?? 'Non assigné' }}</td>
+                                <td>
+                                    <div><strong>Nom d'utilisateur:</strong> {{ strtolower(Str::slug($departement->code)) }}.chef</div>
+                                    <div><strong>Mot de passe:</strong> {{ $departement->generated_password ?? '—' }}</div>
+                                </td>
                                 <td>{{ $departement->universite->nom_universite ?? '—' }}</td>
                                 <td>{{ $departement->universite->ville ?? '—' }}</td>
                                 <td><span class="badge bg-success">Actif</span></td>
                                 <td>
-                                    <a href="{{ route('gestion.editer_departement', $departement) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-pencil-square"></i> Modifier
-                                    </a>
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ route('gestion.editer_departement', $departement) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil-square"></i> Modifier
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ $departement->id }}">
+                                            <i class="bi bi-trash"></i> Supprimer
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
+
+                            <div class="modal fade" id="deleteModal{{ $departement->id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i> Confirmer la suppression</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Voulez-vous vraiment supprimer le département <strong>{{ $departement->nom }} ({{ $departement->code }})</strong> ? Cette action est irréversible.
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                            <form action="{{ route('gestion.detruire_departement', $departement) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-danger">Supprimer définitivement</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center">Aucun département trouvé.</td>
+                                <td colspan="9" class="text-center">Aucun département trouvé.</td>
                             </tr>
                         @endforelse
                     </tbody>

@@ -19,6 +19,8 @@ use App\Models\Enseignant;
 use App\Models\UfrInstitut;
 use App\Models\PendingInscription;
 use App\Models\EmploiDuTemps;
+use App\Models\Information;
+use App\Http\Controllers\DepartementDashboardController;
 
 Route::get('/admin/tableau_bord', function () {
     return view('admin.tableau_bord', [
@@ -27,8 +29,26 @@ Route::get('/admin/tableau_bord', function () {
         'departements' => UfrInstitut::count(),
         'inscriptions_en_attente' => PendingInscription::where('status', 'en_attente')->count(),
         'latestInscription' => PendingInscription::orderBy('created_at', 'desc')->first(),
+       'informations' => Information::whereIn('visibilite', ['public', 'administration'])->latest()->get(),
     ]);
 })->name('admin.tableau_bord');
+
+Route::post('/admin/informations/store', function (Illuminate\Http\Request $request) {
+    $data = $request->validate([
+        'titre' => 'required|string|max:255',
+        'contenu' => 'required|string',
+        'visibilite' => 'required|in:public,etudiant,enseignant,administration',
+    ]);
+
+    \App\Models\Information::create([
+        'titre' => $data['titre'],
+        'contenu' => $data['contenu'],
+        'visibilite' => $data['visibilite'],
+        'user_id' => auth()->id(), // Associe l'annonce à l'admin connecté
+    ]);
+
+    return redirect()->back()->with('success', 'Votre annonce a été publiée avec succès !');
+})->name('admin.informations.store')->middleware('auth');
 
 Route::get('/etudiant/tableau_bord', function () {
     $user = auth()->user();
@@ -38,7 +58,8 @@ Route::get('/etudiant/tableau_bord', function () {
         ->orderBy('jour')
         ->orderBy('heure_debut')
         ->get() : [];
-    return view('etudiant.tableau_bord', compact('emplois', 'etudiant'));
+        $informations = \App\Models\Information::whereIn('visibilite', ['public', 'etudiant'])->latest()->get();
+    return view('etudiant.tableau_bord', compact('emplois', 'etudiant', 'informations'));
 })->name('etudiant.tableau_bord');
 
 Route::get('/enseignant/tableau_bord', [\App\Http\Controllers\EnseignantEmploiDuTempsController::class, 'index'])
@@ -97,6 +118,8 @@ Route::get('/gestion/editer_departement/{departement}', [DepartementController::
 Route::put('/gestion/editer_departement/{departement}', [DepartementController::class, 'update'])->name('gestion.editer_departement.update');
 Route::get('/gestion/editer_etudiant/{etudiant}', [EtudiantController::class, 'edit'])->name('gestion.editer_etudiant');
 Route::put('/gestion/editer_etudiant/{etudiant}', [EtudiantController::class, 'update'])->name('gestion.editer_etudiant.update');
+Route::delete('/gestion/departement/{departement}', [App\Http\Controllers\Gestion\DepartementController::class, 'destroy'])
+    ->name('gestion.detruire_departement');
 // Exports
 Route::get('/gestion/export/excel', [EtudiantController::class, 'exportExcel'])->name('gestion.export.excel');
 Route::get('/gestion/export/pdf', [EtudiantController::class, 'exportPdf'])->name('gestion.export.pdf');
@@ -127,3 +150,25 @@ Route::post('/gestion/emploi-du-temps/{filiere}', [EmploiDuTempsController::clas
 Route::get('/gestion/emploi-du-temps/{emploi}/editer', [EmploiDuTempsController::class, 'edit'])->name('gestion.emploi_du_temps.edit');
 Route::put('/gestion/emploi-du-temps/{emploi}', [EmploiDuTempsController::class, 'update'])->name('gestion.emploi_du_temps.update');
 Route::delete('/gestion/emploi-du-temps/{emploi}', [EmploiDuTempsController::class, 'destroy'])->name('gestion.emploi_du_temps.destroy');
+Route::put('/departement/filieres/{id}', [DepartementDashboardController::class, 'updateFiliere'])->name('departement.filieres.update');
+Route::delete('/departement/filieres/{id}', [DepartementDashboardController::class, 'destroyFiliere'])->name('departement.filieres.destroy');
+Route::patch('/departement/vacations/{id}/{statut}', [DepartementDashboardController::class, 'updateVacationStatut'])->name('departement.vacations.statut');
+Route::post('/departement/informations', [DepartementDashboardController::class, 'storeInformation'])->name('departement.informations.store');
+
+
+Route::post('/enseignant/informations/store', function (Request $request) {
+    $data = $request->validate([
+        'titre' => 'required|string|max:255',
+        'contenu' => 'required|string',
+        'visibilite' => 'required|in:public,etudiant,enseignant,administration',
+    ]);
+
+    Information::create([
+        'titre' => $data['titre'],
+        'contenu' => $data['contenu'],
+        'visibilite' => $data['visibilite'],
+        'user_id' => auth()->id(), // Associe la publication à l'enseignant connecté
+    ]);
+
+    return redirect()->back()->with('success', 'Information publiée avec succès !');
+})->name('enseignant.informations.store')->middleware('auth');

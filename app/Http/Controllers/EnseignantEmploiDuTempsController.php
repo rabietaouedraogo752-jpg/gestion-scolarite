@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Enseignant;
+use App\Models\Information;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class EnseignantEmploiDuTempsController extends Controller
 {
     /**
-     * Affiche l'emploi du temps de l'enseignant connecté
+     * Affiche le tableau de bord complet de l'enseignant connecté
      */
     public function index()
     {
@@ -18,12 +20,14 @@ class EnseignantEmploiDuTempsController extends Controller
             return redirect()->route('login')->with('error', 'Veuillez vous connecter.');
         }
 
-        $enseignant = $user->enseignant;
+        // Récupérer le profil enseignant via la relation ou via query
+        $enseignant = $user->enseignant ?? Enseignant::where('user_id', $user->id)->first();
 
         if (!$enseignant) {
             return redirect()->route('login')->with('error', 'Accès réservé aux enseignants.');
         }
 
+        // 1. Récupération de l'emploi du temps
         $emplois = $enseignant->emploisDuTemps()
             ->with(['filiere', 'niveau'])
             ->orderBy('jour')
@@ -32,7 +36,16 @@ class EnseignantEmploiDuTempsController extends Controller
             ->groupBy('jour');
 
         $jours = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi'];
-        
-        return view('enseignant.emploi_du_temps', compact('enseignant', 'emplois', 'jours'));
+
+        // 2. RÉCUPÉRATION DES ANNONCES DU CHEF DE DÉPARTEMENT
+                // 2. RÉCUPÉRATION DES ANNONCES DU CHEF DE DÉPARTEMENT
+        $informations = Schema::hasTable('informations')
+            ? Information::whereIn('visibilite', ['public', 'enseignant'])
+                ->latest()
+                ->get()
+            : collect();
+
+        // 3. Renvoi vers la vue principale du Tableau de bord
+        return view('enseignant.tableau_bord', compact('enseignant', 'emplois', 'jours', 'informations', 'user'));
     }
 }

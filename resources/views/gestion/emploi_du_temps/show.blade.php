@@ -29,12 +29,12 @@
                             </div>
                             <div class="col-md-6">
                                 @if ($niveau)
-                                    <a href="{{ route('gestion.emploi_du_temps.create_niveau', ['filiere' => $filiere, 'niveau' => $niveau]) }}" 
+                                    <a href="{{ route('gestion.emploi_du_temps.create_niveau', ['filiere' => $filiere, 'niveau' => $niveau]) }}"
                                        class="btn btn-success w-100">
                                         <i class="bi bi-plus"></i> Ajouter un cours
                                     </a>
                                 @else
-                                    <a href="{{ route('gestion.emploi_du_temps.create', ['filiere' => $filiere]) }}" 
+                                    <a href="{{ route('gestion.emploi_du_temps.create', ['filiere' => $filiere]) }}"
                                        class="btn btn-success w-100">
                                         <i class="bi bi-plus"></i> Ajouter un cours
                                     </a>
@@ -98,9 +98,48 @@
 
                 <!-- Tableau hebdomadaire en grille -->
                 @if ($emplois->count() > 0)
+                    @php
+                        // Bornes par défaut, élargies automatiquement si des cours sortent de cette plage
+                        $heureMin = 7;
+                        $heureMax = 19;
+                        foreach ($emplois as $e) {
+                            $heureMin = min($heureMin, (int) substr($e->heure_debut, 0, 2));
+                            $heureMax = max($heureMax, (int) substr($e->heure_fin, 0, 2));
+                        }
+
+                        // Construction de la grille : pour chaque jour/heure -> null, 'occupee', ou ['emploi' => ..., 'rowspan' => n]
+                        $grille = [];
+                        foreach ($jours as $jour) {
+                            for ($h = $heureMin; $h < $heureMax; $h++) {
+                                $grille[$jour][$h] = null;
+                            }
+                        }
+
+                        foreach ($emplois as $emploi) {
+                            // Trouve le jour correspondant dans $jours, peu importe la casse
+                            $jourMatch = collect($jours)->first(fn($j) => strtolower($j) === strtolower($emploi->jour));
+                            if (!$jourMatch) {
+                                continue;
+                            }
+
+                            $hDebut = (int) substr($emploi->heure_debut, 0, 2);
+                            $hFin = (int) substr($emploi->heure_fin, 0, 2);
+                            $duree = max(1, $hFin - $hDebut);
+
+                            if (array_key_exists($jourMatch, $grille) && array_key_exists($hDebut, $grille[$jourMatch])) {
+                                $grille[$jourMatch][$hDebut] = ['emploi' => $emploi, 'rowspan' => $duree];
+                                for ($h = $hDebut + 1; $h < $hDebut + $duree; $h++) {
+                                    if (array_key_exists($h, $grille[$jourMatch])) {
+                                        $grille[$jourMatch][$h] = 'occupee';
+                                    }
+                                }
+                            }
+                        }
+                    @endphp
+
                     <h4 class="mt-5 mb-3">Vue Hebdomadaire</h4>
                     <div class="table-responsive">
-                        <table class="table table-bordered text-center">
+                        <table class="table table-bordered text-center align-middle">
                             <thead class="table-light">
                                 <tr>
                                     <th>Heure</th>
@@ -110,20 +149,24 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @for ($heure = 8; $heure < 18; $heure++)
+                                @for ($heure = $heureMin; $heure < $heureMax; $heure++)
                                     <tr>
                                         <td><strong>{{ str_pad($heure, 2, '0', STR_PAD_LEFT) }}h00</strong></td>
                                         @foreach ($jours as $jour)
-                                            <td>
-                                                @foreach ($emplois as $emploi)
-                                                    @if (strtolower($emploi->jour) === strtolower($jour) && (int)substr($emploi->heure_debut, 0, 2) === $heure)
-                                                        <div class="bg-primary text-white p-2 rounded">
-                                                            <small><strong>{{ $emploi->matiere }}</strong></small><br>
-                                                            <small>{{ $emploi->salle }}</small>
-                                                        </div>
-                                                    @endif
-                                                @endforeach
-                                            </td>
+                                            @php $cell = $grille[$jour][$heure] ?? null; @endphp
+                                            @if ($cell === 'occupee')
+                                                {{-- déjà couverte par le rowspan de la ligne au-dessus --}}
+                                            @elseif (is_array($cell))
+                                                <td rowspan="{{ $cell['rowspan'] }}">
+                                                    <div class="bg-primary text-white p-2 rounded">
+                                                        <small><strong>{{ $cell['emploi']->matiere }}</strong></small><br>
+                                                        <small>{{ $cell['emploi']->salle }}</small><br>
+                                                        <small>{{ substr($cell['emploi']->heure_debut, 0, 5) }} - {{ substr($cell['emploi']->heure_fin, 0, 5) }}</small>
+                                                    </div>
+                                                </td>
+                                            @else
+                                                <td></td>
+                                            @endif
                                         @endforeach
                                     </tr>
                                 @endfor
@@ -134,7 +177,7 @@
             @else
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle"></i>
-                    Aucun cours planifié {{ $niveau ? 'pour ce niveau' : '' }}. 
+                    Aucun cours planifié {{ $niveau ? 'pour ce niveau' : '' }}.
                     <a href="{{ $niveau ? route('gestion.emploi_du_temps.create_niveau', ['filiere' => $filiere, 'niveau' => $niveau]) : route('gestion.emploi_du_temps.create', $filiere) }}" class="alert-link">
                         Ajouter un cours
                     </a>

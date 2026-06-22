@@ -35,6 +35,13 @@
             </div>
         </div>
 
+        <div class="row">
+            <div class="col-md-12 mb-3">
+                <label class="form-label">Chef de département</label>
+                <input type="text" name="chef_nom" class="form-control" value="{{ old('chef_nom', $departement->chef_nom) }}" placeholder="Nom et prénom du chef de département">
+            </div>
+        </div>
+
         <h5 class="mt-3">Université</h5>
         <div class="row">
             <div class="col-md-3 mb-3">

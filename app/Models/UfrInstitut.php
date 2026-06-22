@@ -13,6 +13,8 @@ class UfrInstitut extends Model
         'universite_id',
         'code',
         'nom',
+        'chef_nom',
+        'generated_password',
     ];
 
     public function universite()

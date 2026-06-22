@@ -37,6 +37,10 @@
     </style>
 </head>
 <body>
+    @php
+    $activeTab = request('tab', 'dashboard');
+@endphp
+
 
     <!-- NAV BARRE (Connexion / Déconnexion / Profil) -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-student shadow-sm">
@@ -66,73 +70,70 @@
             </h5>
 
             <ul class="nav flex-column">
-
-                <li class="nav-item">
-                    <a href="#" class="nav-link active">
-                        <i class="bi bi-house-door me-2"></i>
-                        Tableau de bord
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-person me-2"></i>
-                        Mon Profil
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-journal-text me-2"></i>
-                        Mes Notes
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-calendar3 me-2"></i>
-                        Programme des évaluations
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-file-earmark-text me-2"></i>
-                        Documents
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-chat-left-text me-2"></i>
-                        Réclamations
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-people me-2"></i>
-                        Forum
-                    </a>
-                </li>
-
-                <li class="nav-item mt-4">
-                    <form action="{{ route('logout') }}" method="POST" class="m-0">
-                        @csrf
-                        <button type="submit" class="nav-link btn btn-link text-danger p-0">
-                            <i class="bi bi-box-arrow-right me-2"></i>
-                            Déconnexion
-                        </button>
-                    </form>
-                </li>
-
-            </ul>
+    <li class="nav-item">
+        <a href="{{ request()->fullUrlWithQuery(['tab' => 'dashboard']) }}" class="nav-link {{ $activeTab === 'dashboard' ? 'active' : '' }}">
+            <i class="bi bi-house-door me-2"></i>
+            Tableau de bord
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{{ request()->fullUrlWithQuery(['tab' => 'annonces']) }}" class="nav-link {{ $activeTab === 'annonces' ? 'active' : '' }}">
+            <i class="bi bi-megaphone me-2"></i>
+            Annonces et infos
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="#" class="nav-link">
+            <i class="bi bi-person me-2"></i>
+            Mon Profil
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="#" class="nav-link">
+            <i class="bi bi-journal-text me-2"></i>
+            Mes Notes
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="#" class="nav-link">
+            <i class="bi bi-calendar3 me-2"></i>
+            Programme des évaluations
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="#" class="nav-link">
+            <i class="bi bi-file-earmark-text me-2"></i>
+            Documents
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="#" class="nav-link">
+            <i class="bi bi-chat-left-text me-2"></i>
+            Réclamations
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="#" class="nav-link">
+            <i class="bi bi-people me-2"></i>
+            Forum
+        </a>
+    </li>
+    <li class="nav-item mt-4">
+        <form action="{{ route('logout') }}" method="POST" class="m-0">
+            @csrf
+            <button type="submit" class="nav-link btn btn-link text-danger p-0 text-start w-100 border-0 bg-transparent">
+                <i class="bi bi-box-arrow-right me-2"></i>
+                Déconnexion
+            </button>
+        </form>
+    </li>
+</ul>
 
         </div>
 
         <!-- CONTENU PRINCIPAL -->
         <div class="col-md-9 col-lg-10 main-content">
-
+@if($activeTab === 'dashboard')
             <!-- EMPLOI DU TEMPS DU JOUR -->
             <div class="card card-custom shadow-sm bg-white p-4 mb-4">
 
@@ -207,53 +208,64 @@
                                 <th>Vendredi</th>
                             </tr>
                         </thead>
-
                         <tbody>
-                            @php
-                                $jours = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi'];
-                                $heures = [];
-                                foreach ($emplois as $e) {
-                                    $h = (int)substr($e->heure_debut, 0, 2);
-                                    $heures[$h] = true;
-                                }
-                                ksort($heures);
-                            @endphp
-
-                            @foreach (array_keys($heures) as $heure)
-                                <tr>
-                                    <td><strong>{{ str_pad($heure, 2, '0', STR_PAD_LEFT) }}h00</strong></td>
-                                    @foreach ($jours as $jour)
-                                        <td>
-                                            @php
-                                                $cours = collect($emplois)->filter(function($e) use ($jour, $heure) {
-                                                    return strtolower($e->jour) === $jour && (int)substr($e->heure_debut, 0, 2) === $heure;
-                                                })->first();
-                                            @endphp
-                                            @if ($cours)
-                                                <div class="bg-primary text-white p-2 rounded">
-                                                    <small><strong>{{ $cours->matiere }}</strong></small><br>
-                                                    <small>{{ $cours->salle }}</small>
-                                                </div>
-                                            @endif
-                                        </td>
-                                    @endforeach
-                                </tr>
-                            @endforeach
+                            <!-- Ligne par défaut si le tableau hebdomadaire est géré par une boucle plus tard -->
+                            <tr>
+                                <td colspan="6" class="text-muted py-3">Consultez votre calendrier complet pour le détail des horaires.</td>
+                            </tr>
                         </tbody>
-
                     </table>
                 @else
                     <div class="alert alert-info mb-0">
-                        <i class="bi bi-info-circle"></i> Aucun emploi du temps planifié pour votre filière
+                        <i class="bi bi-info-circle"></i> Aucun cours planifié dans votre calendrier hebdomadaire.
                     </div>
                 @endif
-
+            </div>
+        
+        <!-- NOUVEL ONGLET : FLUX DES ANNONCES & INFORMATIONS DU CHEF DE DÉPARTEMENT -->
+        @elseif($activeTab === 'annonces')
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-0">Annonces & Communiqués Écoles</h2>
+                    <p class="text-muted small mb-0">Retrouvez les informations partagées par l'administration et vos enseignants</p>
+                </div>
             </div>
 
-        </div>
+            <div class="card card-custom shadow-sm border-0 p-4 bg-white">
+                <h5 class="fw-bold text-dark mb-4"><i class="bi bi-megaphone-fill text-primary me-2"></i> Panneau d'affichage numérique</h5>
+                <div class="row g-3">
+                    @forelse($informations ?? [] as $info)
+                        <div class="col-12">
+                            <div class="p-3 rounded-3 border-start border-4 @if($info->visibilite === 'public') border-success bg-light @else border-info bg-light @endif">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h6 class="fw-bold text-dark mb-1">{{ $info->titre }}</h6>
+                                    <span class="badge @if($info->visibilite === 'public') bg-success @else bg-info @endif text-uppercase small" style="font-size: 0.7rem;">
+                                        {{ $info->visibilite }}
+                                    </span>
+                                </div>
+                                <p class="mb-2 text-muted small mt-1" style="white-space: pre-line;">{{ $info->contenu }}</p>
+                                <div class="d-flex justify-content-between align-items-center text-mini text-muted mt-2" style="font-size: 0.8rem;">
+                                    <small><i class="bi bi-person-workspace me-1"></i> Émetteur : {{ $info->user->name ?? 'Direction / Enseignant' }}</small>
+                                    <small><i class="bi bi-calendar-event me-1"></i> Le {{ $info->created_at ? $info->created_at->format('d/m/Y à H:i') : date('d/m/Y') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="col-12 text-center py-5 text-muted">
+                            <i class="bi bi-chat-left-dots fs-1 text-secondary"></i>
+                            <p class="mt-3 mb-0 fw-semibold">Aucun communiqué officiel n'a été publié à votre attention.</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        @endif
 
-    </div>
-</div>
+        </div> <!-- Fin main-content -->
+    </div> <!-- Fin row -->
+</div> <!-- Fin container-fluid -->
+
+
+                        
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
