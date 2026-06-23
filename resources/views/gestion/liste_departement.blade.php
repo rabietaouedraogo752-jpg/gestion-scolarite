@@ -40,17 +40,19 @@
                     <a href="{{ route('gestion.creer_departement') }}" class="btn btn-primary">
                         <i class="bi bi-plus-circle me-2"></i> Ajouter un département
                     </a>
-                    <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#importDepartmentModal"><i class="bi bi-upload me-2"></i> Importer</button>
+                    <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#importDepartmentModal">
+                        <i class="bi bi-upload me-2"></i> Importer
+                    </button>
                     <div class="dropdown">
                         <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="bi bi-download me-2"></i> Exporter
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ route('gestion.export.departements.excel', request()->only('universite_id')) }}"><i class="bi bi-file-earmark-excel me-2"></i> Excel (.xlsx)</a></li>
-                            <li><a class="dropdown-item" href="{{ route('gestion.export.departements.pdf', request()->only('universite_id')) }}"><i class="bi bi-file-earmark-pdf me-2"></i> PDF</a></li>
-                            <li><a class="dropdown-item" href="{{ route('gestion.export.departements.word', request()->only('universite_id')) }}"><i class="bi bi-file-earmark-word me-2"></i> Word (.docx)</a></li>
-                            <li><a class="dropdown-item" href="{{ route('gestion.export.departements.html', request()->only('universite_id')) }}"><i class="bi bi-file-earmark-code me-2"></i> HTML</a></li>
-                        </ul>
+    <li><a class="dropdown-item" href="{{ route('gestion.export.departements.excel') }}">Excel</a></li>
+    <li><a class="dropdown-item" href="{{ route('gestion.export.departements.pdf') }}">PDF</a></li>
+    <li><a class="dropdown-item" href="{{ route('gestion.export.departements.word') }}">Word</a></li>
+    <li><a class="dropdown-item" href="{{ route('gestion.export.departements.html') }}">HTML</a></li>
+</ul>
                     </div>
                 </div>
             </div>
@@ -60,18 +62,12 @@
                     <label class="form-label small text-muted">Filtrer par université</label>
                     <select id="filterUniversite" name="universite_id" class="form-select">
                         <option value="">Toutes les universités</option>
-                        @foreach($universites as $universite)
-                            <option value="{{ $universite->id }}" @selected((string) $universiteId === (string) $universite->id)>
+                        @foreach($universites ?? [] as $universite)
+                            <option value="{{ $universite->id }}" @selected(isset($universiteId) && (string) $universiteId === (string) $universite->id)>
                                 {{ $universite->nom_universite }}
                             </option>
                         @endforeach
                     </select>
-                </div>
-                <div class="col-md-4 d-flex align-items-end gap-2 mb-2">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-funnel me-2"></i> Filtrer
-                    </button>
-                    <a href="{{ route('gestion.liste_departement') }}" class="btn btn-outline-secondary">Réinitialiser</a>
                 </div>
             </form>
 
@@ -79,15 +75,7 @@
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>#</th>
-                            <th>Code</th>
-                            <th>Nom de département</th>
-                            <th>Chef de département</th>
-                            <th>Accès</th>
-                            <th>Université</th>
-                            <th>Ville</th>
-                            <th>Statut</th>
-                            <th>Actions</th>
+                            <th>#</th><th>Code</th><th>Nom</th><th>Chef</th><th>Accès</th><th>Université</th><th>Statut</th><th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -98,11 +86,9 @@
                                 <td>{{ $departement->nom ?? '—' }}</td>
                                 <td>{{ $departement->chef_nom ?? 'Non assigné' }}</td>
                                 <td>
-                                    <div><strong>Nom d'utilisateur:</strong> {{ strtolower(Str::slug($departement->code)) }}.chef</div>
-                                    <div><strong>Mot de passe:</strong> {{ $departement->generated_password ?? '—' }}</div>
+                                    <div><strong>Login:</strong> {{ strtolower(Str::slug($departement->code ?? '')) }}.chef</div>
                                 </td>
                                 <td>{{ $departement->universite->nom_universite ?? '—' }}</td>
-                                <td>{{ $departement->universite->ville ?? '—' }}</td>
                                 <td><span class="badge bg-success">Actif</span></td>
                                 <td>
                                     <div class="d-flex gap-1">
@@ -120,15 +106,15 @@
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i> Confirmer la suppression</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            <h5 class="modal-title text-danger">Confirmer la suppression</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body">
-                                            Voulez-vous vraiment supprimer le département <strong>{{ $departement->nom }} ({{ $departement->code }})</strong> ? Cette action est irréversible.
+                                            Voulez-vous vraiment supprimer <strong>{{ $departement->nom }}</strong> ?
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                            <form action="{{ route('gestion.detruire_departement', $departement) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('gestion.supprimer_departement', $departement) }}" method="POST" style="display:inline;">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger">Supprimer définitivement</button>
@@ -138,9 +124,7 @@
                                 </div>
                             </div>
                         @empty
-                            <tr>
-                                <td colspan="9" class="text-center">Aucun département trouvé.</td>
-                            </tr>
+                            <tr><td colspan="8" class="text-center">Aucun département trouvé.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -152,21 +136,15 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Importer un fichier (pdf, excel, word, uml)</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">Importer un fichier</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{{ route('gestion.import.departements') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Fichier</label>
-                            <input type="file" name="file" class="form-control" accept=".pdf,.xlsx,.xls,.docx,.doc,.uml" required>
-                            @error('file') <div class="text-danger small">{{ $message }}</div> @enderror
-                        </div>
-                        <p class="small text-muted">Le fichier sera simplement stocké; aucun traitement automatique n'est effectué.</p>
+                        <input type="file" name="file" class="form-control" required>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
                         <button type="submit" class="btn btn-primary">Importer</button>
                     </div>
                 </form>
@@ -175,13 +153,5 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const filtersForm = document.getElementById('departmentFilters');
-            document.getElementById('filterUniversite').addEventListener('change', function () {
-                filtersForm.submit();
-            });
-        });
-    </script>
 </body>
 </html>

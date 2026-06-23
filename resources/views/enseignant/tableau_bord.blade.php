@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -51,7 +50,6 @@
 <body>
 
     @php
-        // Détection de l'onglet actif (par défaut : l'emploi du temps 'emploi')
         $activeTab = request('tab', 'emploi');
     @endphp
 
@@ -91,10 +89,6 @@
                        <a href="#" class="nav-link"><i class="bi bi-person me-2"></i>Mon Profil</a>
                     </li>
                 </ul>
-
-   
-
-
             </div>
 
             <div class="col-md-9 col-lg-10 main-content">
@@ -142,14 +136,14 @@
                                                 @if($info->visibilite === 'public')
                                                     <span class="badge bg-info text-dark"><i class="bi bi-globe me-1"></i> Public</span>
                                                 @else
-                                                    <span class="badge bg-warning text-dark"><i class="bi bi-lock-fill me-1"></i> Privé ({{ ucfirst($info->cible) }})</span>
+                                                    <span class="badge bg-warning text-dark"><i class="bi bi-lock-fill me-1"></i> Privé</span>
                                                 @endif
                                                 <small class="text-muted ms-2">{{ $info->created_at ? $info->created_at->diffForHumans() : '' }}</small>
                                             </div>
                                         </div>
                                         <p class="mb-0 text-secondary small">{{ $info->contenu }}</p>
                                         <small class="text-muted d-block mt-1 text-end" style="font-size: 0.75rem;">
-                                            Par : {{ $info->auteur->name ?? 'Système' }}
+                                            Par : {{ optional($info->auteur)->name ?? 'Auteur inconnu' }}
                                             @if($info->user_id === auth()->id()) <span class="fw-bold text-success">(Vous)</span> @endif
                                         </small>
                                     </div>
@@ -164,7 +158,6 @@
                 @endif
 
             </div>
-
         </div>
     </div>
 
@@ -206,5 +199,3 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
-```

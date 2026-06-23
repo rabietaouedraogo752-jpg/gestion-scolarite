@@ -45,9 +45,7 @@
                 <li>
                     <a href="{{ route('gestion.liste_departement') }}" class="nav-link"><i class="bi bi-building me-2"></i> Départements</a>
                 </li>
-                <li>
-                    <a href="#" class="nav-link"><i class="bi bi-journal-text me-2"></i> Examens & Notes</a>
-                </li>
+                
             </ul>
             
             <div class="border-top border-secondary pt-3">
@@ -214,7 +212,7 @@
                                     </div>
                                     <p class="mb-2 text-muted small mt-1" style="white-space: pre-line;">{{ $info->contenu }}</p>
                                     <div class="d-flex justify-content-between align-items-center text-mini text-muted mt-2">
-                                        <small><i class="bi bi-person-circle me-1"></i> Par : {{ $info->user->name ?? 'Chef de Département' }}</small>
+                                        <small><i class="bi bi-person-circle me-1"></i> Par : {{ $info->auteur->name ?? 'Auteur inconnu' }}</small>
                                         <small><i class="bi bi-calendar-event me-1"></i> Le {{ $info->created_at->format('d/m/Y à H:i') }}</small>
                                     </div>
                                 </div>

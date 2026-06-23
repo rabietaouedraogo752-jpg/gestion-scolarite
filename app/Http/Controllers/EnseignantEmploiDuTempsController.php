@@ -37,10 +37,10 @@ class EnseignantEmploiDuTempsController extends Controller
 
         $jours = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi'];
 
-        // 2. RÉCUPÉRATION DES ANNONCES DU CHEF DE DÉPARTEMENT
-                // 2. RÉCUPÉRATION DES ANNONCES DU CHEF DE DÉPARTEMENT
+        // 2. RÉCUPÉRATION DES ANNONCES DU CHEF DE DÉPARTEMENT (MODIFIÉ SÉCURISÉ)
         $informations = Schema::hasTable('informations')
-            ? Information::whereIn('visibilite', ['public', 'enseignant'])
+            ? Information::with('auteur')
+                ->whereIn('visibilite', ['public', 'enseignant'])
                 ->latest()
                 ->get()
             : collect();
