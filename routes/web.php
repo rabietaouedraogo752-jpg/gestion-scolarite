@@ -21,7 +21,7 @@ use App\Models\PendingInscription;
 use App\Models\EmploiDuTemps;
 use App\Models\Information;
 use App\Http\Controllers\DepartementDashboardController;
-
+use App\Http\Controllers\EnseignantDashboardController;
 Route::get('/admin/tableau_bord', function () {
     return view('admin.tableau_bord', [
         'etudiants' => Etudiant::count(),
@@ -62,9 +62,10 @@ Route::get('/etudiant/tableau_bord', function () {
     return view('etudiant.tableau_bord', compact('emplois', 'etudiant', 'informations'));
 })->name('etudiant.tableau_bord');
 
-Route::get('/enseignant/tableau_bord', [\App\Http\Controllers\EnseignantEmploiDuTempsController::class, 'index'])
+Route::get('/enseignant/tableau_bord', [EnseignantDashboardController::class, 'tableau_bord'])
     ->middleware('auth')
     ->name('enseignant.tableau_bord');
+    
 Route::get('/departement/tableau_bord', [\App\Http\Controllers\DepartementDashboardController::class, 'index'])->name('departement.tableau_bord');
 Route::post('/departement/filieres', [\App\Http\Controllers\DepartementDashboardController::class, 'storeFiliere'])->name('departement.filieres.store');
 Route::post('/departement/calendriers-evaluations', [\App\Http\Controllers\DepartementDashboardController::class, 'storeCalendrierEvaluation'])->name('departement.calendriers_evaluations.store');
@@ -104,8 +105,7 @@ Route::get('/gestion/inscription_details/{inscription?}', function (?PendingInsc
 
 Route::get('/gestion/liste_etudiant', [EtudiantController::class, 'index'])->name('gestion.liste_etudiant');
 Route::get('/gestion/liste_enseignant', [EnseignantController::class, 'index'])->name('gestion.liste_enseignant');
-Route::get('/gestion/liste_departement', [DepartementController::class, 'index'])->name('gestion.liste_departement');
-
+Route::get('/gestion/liste_departement', [DepartementController::class, 'index'])->name('gestion.liste_departement')
 Route::get('/gestion/creer_etudiant', [EtudiantController::class, 'create'])->name('gestion.creer_etudiant');
 Route::post('/gestion/creer_etudiant', [EtudiantController::class, 'store'])->name('gestion.creer_etudiant.store');
 Route::get('/gestion/creer_enseignant', [EnseignantController::class, 'create'])->name('gestion.creer_enseignant');
@@ -172,3 +172,12 @@ Route::post('/enseignant/informations/store', function (Request $request) {
 
     return redirect()->back()->with('success', 'Information publiée avec succès !');
 })->name('enseignant.informations.store')->middleware('auth');
+
+
+Route::get('/enseignant/ressources', [EnseignantDashboardController::class, 'showRessources'])->name('ressources.index');
+Route::post('/enseignant/ressources', [EnseignantDashboardController::class, 'storeRessource'])->name('ressources.store');
+Route::get('/enseignant/ressources/download/{id}', [EnseignantDashboardController::class, 'downloadRessource'])->name('ressources.download');
+
+Route::post('/enseignant/ressources/store', [EnseignantDashboardController::class, 'storeRessource'])->name('enseignant.ressources.store');
+Route::put('/enseignant/ressources/update/{id}', [EnseignantDashboardController::class, 'updateRessource'])->name('enseignant.ressources.update');
+Route::delete('/enseignant/ressources/destroy/{id}', [EnseignantDashboardController::class, 'destroyRessource'])->name('enseignant.ressources.destroy');

@@ -84,17 +84,13 @@
                     </li>
 
                     <li class="nav-item">
-                       <a href="#" class="nav-link"><i class="bi bi-file-earmark-text me-2"></i>Ressources</a>
+                       <a href="{{ route('enseignant.tableau_bord', ['tab' => 'ressources']) }}" class="nav-link {{ $activeTab === 'ressources' ? 'active' : '' }}"><i class="bi bi-file-earmark-text me-2"></i>Ressources</a>
                     </li>
 
                     <li class="nav-item">
-                       <a href="#" class="nav-link"><i class="bi bi-person me-2"></i>Mon Profil</a>
+                       <a href="{{ route('enseignant.tableau_bord', ['tab' => 'mon_profil']) }}" class="nav-link {{ $activeTab === 'mon_profil' ? 'active' : '' }}"><i class="bi bi-person me-2"></i>Mon Profil</a>
                     </li>
                 </ul>
-
-   
-
-
             </div>
 
             <div class="col-md-9 col-lg-10 main-content">
@@ -115,7 +111,7 @@
 
                 @if ($activeTab === 'emploi')
                     @include('enseignant.emploi_du_temps')
-
+                
                 @elseif ($activeTab === 'infos')
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h2 class="mb-0">
@@ -161,9 +157,68 @@
                             @endforelse
                         </div>
                     </div>
-                @endif
 
-            </div>
+                @elseif ($activeTab === 'ressources')
+                    @includeIf('enseignant.resources')
+
+                @elseif ($activeTab === 'mon_profil')
+                    <div class="mb-4">
+                        <h2><i class="bi bi-person-bounding-box me-2 text-primary"></i> Mon Profil Enseignant</h2>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <div class="card card-custom shadow-sm bg-white p-4 text-center border-0">
+                                <div class="mb-3">
+                                    <i class="bi bi-person-badge text-primary" style="font-size: 5rem;"></i>
+                                </div>
+                                <h4 class="fw-bold text-dark">{{ $enseignant->user->name ?? 'Nom indisponible' }}</h4>
+                                <p class="text-muted small mb-3">{{ $enseignant->user->email ?? 'Email indisponible' }}</p>
+                                <span class="badge bg-primary px-3 py-2">Enseignant Permanent</span>
+                                <hr class="my-4">
+                                <div class="text-start">
+                                    <p class="mb-2 text-secondary small"><i class="bi bi-building me-2"></i><strong>Spécialité :</strong> {{ $enseignant->domaine_enseignement ?? 'Non définie' }}</p>
+                                    <p class="mb-2 text-secondary small"><i class="bi bi-building me-2"></i><strong>Grade :</strong> {{ $enseignant->grade ?? 'Non défini' }}</p>
+                                    <p class="mb-2 text-secondary small"><i class="bi bi-calendar-check me-2"></i><strong>Membre depuis :</strong> {{ $enseignant->created_at ? $enseignant->created_at->format('d/m/Y') : 'N/A' }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-8">
+                            <div class="card card-custom shadow-sm bg-white p-4 border-0">
+                                <h5 class="fw-bold text-dark mb-4 border-bottom pb-2">
+                                    <i class="bi bi-gear-fill text-secondary me-2"></i> Modifier mes informations
+                                </h5>
+
+                                <form action="{{ route('enseignant.informations.store') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="action_type" value="update_profile">
+
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold text-secondary">Nom Complet</label>
+                                            <input type="text" class="form-control" name="titre" value="{{ $enseignant->user->name ?? '' }}" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold text-secondary">Spécialité / Département</label>
+                                            <input type="text" class="form-control" name="cible" value="{{ $enseignant->specialite ?? '' }}">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label fw-semibold text-secondary">À propos / Présentation courte</label>
+                                            <textarea class="form-control" name="contenu" rows="3" placeholder="Présentation rapide..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="text-end mt-4">
+                                        <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                                            <i class="bi bi-save me-1"></i> Sauvegarder les modifications
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                @endif   </div>
 
         </div>
     </div>
@@ -180,11 +235,11 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="titre_info" class="form-label text-dark fw-bold">Titre de l'annonce</label>
-                            <input type="text" class="form-control" id="titre_info" name="titre" placeholder="Ex: Report de cours, Disponibilité des polycopiés..." required>
+                            <input type="text" class="form-control" id="titre_info" name="titre" required>
                         </div>
                         <div class="mb-3">
                             <label for="contenu_info" class="form-label text-dark fw-bold">Contenu</label>
-                            <textarea class="form-control" id="contenu_info" name="contenu" rows="4" placeholder="Écrivez votre message ici..." required></textarea>
+                            <textarea class="form-control" id="contenu_info" name="contenu" rows="4" required></textarea>
                         </div>
                         <div class="mb-3">
                             <label for="visibilite_info" class="form-label text-dark fw-bold">Visibilité</label>
@@ -206,5 +261,3 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
-```
