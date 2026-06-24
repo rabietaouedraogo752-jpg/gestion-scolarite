@@ -105,7 +105,8 @@ Route::get('/gestion/inscription_details/{inscription?}', function (?PendingInsc
 
 Route::get('/gestion/liste_etudiant', [EtudiantController::class, 'index'])->name('gestion.liste_etudiant');
 Route::get('/gestion/liste_enseignant', [EnseignantController::class, 'index'])->name('gestion.liste_enseignant');
-Route::get('/gestion/liste_departement', [DepartementController::class, 'index'])->name('gestion.liste_departement')
+Route::get('/gestion/liste_departement', [DepartementController::class, 'index'])->name('gestion.liste_departement');
+
 Route::get('/gestion/creer_etudiant', [EtudiantController::class, 'create'])->name('gestion.creer_etudiant');
 Route::post('/gestion/creer_etudiant', [EtudiantController::class, 'store'])->name('gestion.creer_etudiant.store');
 Route::get('/gestion/creer_enseignant', [EnseignantController::class, 'create'])->name('gestion.creer_enseignant');
@@ -177,7 +178,6 @@ Route::post('/enseignant/informations/store', function (Request $request) {
 Route::get('/enseignant/ressources', [EnseignantDashboardController::class, 'showRessources'])->name('ressources.index');
 Route::post('/enseignant/ressources', [EnseignantDashboardController::class, 'storeRessource'])->name('ressources.store');
 Route::get('/enseignant/ressources/download/{id}', [EnseignantDashboardController::class, 'downloadRessource'])->name('ressources.download');
-
 Route::post('/enseignant/ressources/store', [EnseignantDashboardController::class, 'storeRessource'])->name('enseignant.ressources.store');
 Route::put('/enseignant/ressources/update/{id}', [EnseignantDashboardController::class, 'updateRessource'])->name('enseignant.ressources.update');
 Route::delete('/enseignant/ressources/destroy/{id}', [EnseignantDashboardController::class, 'destroyRessource'])->name('enseignant.ressources.destroy');
