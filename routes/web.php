@@ -2,8 +2,11 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash; 
+use Illuminate\Support\Str;          
 
 /* --- MODÈLES ET CONTROLLERS --- */
+use App\Models\User;
 use App\Models\Etudiant;
 use App\Models\Enseignant;
 use App\Models\UfrInstitut;
@@ -18,6 +21,7 @@ use App\Http\Controllers\Auth\LoginController;
 
 /* --- PAGES PUBLIQUES ET TABLEAUX DE BORD --- */
 Route::get('/informations', [InformationController::class, 'index'])->name('informations.index');
+
 Route::get('/admin/tableau_bord', function () {
     return view('admin.tableau_bord', [
         'etudiants' => Etudiant::count(),
@@ -40,43 +44,22 @@ Route::get('/etudiant/tableau_bord', function () {
 })->name('etudiant.tableau_bord');
 
 Route::get('/enseignant/tableau_bord', [\App\Http\Controllers\EnseignantEmploiDuTempsController::class, 'index'])->middleware('auth')->name('enseignant.tableau_bord');
-Route::get('/departement/tableau_bord', function () {
-    // 1. Récupérer l'utilisateur connecté (le chef de département)
-    $user = auth()->user();
-    
-    // 2. Vous pouvez charger ici les données spécifiques au département si nécessaire
-    // Exemple : $departement = $user->departement;
 
-    // 3. Retourner la vue correspondante (assurez-vous que ce fichier blade existe)
-    return view('departement.tableau_bord'); 
-})->middleware('auth')->name('departement.tableau_bord');
-/* --- TABLEAU DE BORD DU CHEF DE DEPARTEMENT (VRAI CODE FONCTIONNEL) --- */
-Route::get('/departement/tableau_board', function () {
-    // 1. Récupération des statistiques réelles depuis vos modèles
+/* --- TABLEAU DE BORD DU CHEF DE DÉPARTEMENT --- */
+Route::get('/departement/tableau_bord', function () {
     $total_etudiants = \App\Models\Etudiant::count();
     $total_enseignants = \App\Models\Enseignant::count();
+    Route::get('/departement/tableau_bord', function () {
+    return view('departement.tableau_bord');
+})->name('departement.tableau_bord');
     
-    // Si vous avez un modèle Filiere ou Classe, vous pouvez décommenter la ligne suivante :
-    // $total_filieres = \App\Models\Filiere::count(); 
-
-    // 2. Envoi des données à votre vue Blade
     return view('departement.tableau_bord', [
         'etudiants' => $total_etudiants,
         'enseignants' => $total_enseignants,
-        'activeTab' => 'dashboard' // Permet de gérer l'activation des liens dans votre sidebar
+        'activeTab' => 'dashboard'
     ]);
 })->middleware('auth')->name('departement.tableau_board');
 
-
-/* --- COUPONS DE SÉCURITÉ POUR LES LIENS DE LA SIDEBAR --- */
-// Ces routes évitent que votre tableau de bord ne crashe à cause de liens manquants
-Route::get('/gestion/emploi-du-temps', function() { 
-    return "Page Emploi du temps du département en développement"; 
-})->name('gestion.emploi_du_temps.index');
-
-Route::get('/gestion/liste_etudiant', function() { 
-    return "Page de gestion des étudiants"; 
-})->name('gestion.liste_etudiant');
 
 /* --- ACTIONS POST --- */
 Route::post('/admin/informations/store', function (Request $request) {
@@ -91,6 +74,7 @@ Route::post('/enseignant/informations/store', function (Request $request) {
     return redirect()->back()->with('success', 'Publié !');
 })->name('enseignant.informations.store');
 
+
 /* --- GESTION ADMINISTRATIVE --- */
 
 // --- Listes ---
@@ -104,7 +88,7 @@ Route::get('/gestion/creer_enseignant', [EnseignantController::class, 'create'])
 Route::get('/gestion/creer_departement', [DepartementController::class, 'create'])->name('gestion.creer_departement');
 Route::post('/gestion/creer_departement', [DepartementController::class, 'store'])->name('gestion.creer_departement.store');
 
-// --- Edition / Suppression ---
+// --- Édition / Suppression ---
 Route::get('/gestion/editer_enseignant/{enseignant}', [EnseignantController::class, 'edit'])->name('gestion.editer_enseignant');
 Route::put('/gestion/editer_enseignant/{enseignant}', [EnseignantController::class, 'update'])->name('gestion.editer_enseignant.update');
 Route::get('/gestion/editer_etudiant/{etudiant}', [EtudiantController::class, 'edit'])->name('gestion.editer_etudiant');
@@ -117,11 +101,9 @@ Route::delete('/gestion/supprimer_departement/{departement}', [DepartementContro
 // --- Imports ---
 Route::post('/gestion/import/departements', [DepartementController::class, 'import'])->name('gestion.import.departements');
 Route::post('/gestion/import/enseignants', [EnseignantController::class, 'import'])->name('gestion.import.enseignants');
-Route::post('/gestion/import/etudiants', [EtudiantController::class, 'import'])->name('gestion.import.etudiants'); // Ajouté pour corriger l'import étudiant !
+Route::post('/gestion/import/etudiants', [EtudiantController::class, 'import'])->name('gestion.import.etudiants');
 
-// --- Exports ---
-
-// Enseignants
+// --- Exports Enseignants ---
 Route::get('/gestion/export/enseignants/excel', [EnseignantController::class, 'exportExcel'])->name('gestion.export.enseignants.excel');
 Route::get('/gestion/export/enseignants/pdf', [EnseignantController::class, 'exportPdf'])->name('gestion.export.enseignants.pdf');
 Route::get('/gestion/export/enseignants/word', [EnseignantController::class, 'exportWord'])->name('gestion.export.enseignants.word');
@@ -138,7 +120,7 @@ Route::get('/gestion/export/departements/excel', [DepartementController::class, 
 Route::get('/gestion/export/departements/pdf', [DepartementController::class, 'exportPdf'])->name('gestion.export.departements.pdf');
 Route::get('/gestion/export/departements/word', [DepartementController::class, 'exportWord'])->name('gestion.export.departements.word');
 Route::get('/gestion/export/departements/html', [DepartementController::class, 'exportHtml'])->name('gestion.export.departements.html');
-Route::get('/gestion/export/departements/all', [DepartementController::class, 'exportExcel'])->name('gestion.export.departements.all'); // Ajouté pour corriger la vue département !
+Route::get('/gestion/export/departements/all', [DepartementController::class, 'exportExcel'])->name('gestion.export.departements.all');
 
 // --- Inscriptions ---
 Route::get('/gestion/inscriptions-en-attente', [PendingInscriptionController::class, 'index'])->name('gestion.inscriptions.index');
@@ -148,8 +130,209 @@ Route::post('/gestion/inscriptions-en-attente/{inscription}/approver', [PendingI
 Route::get('/connexion', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/connexion', [LoginController::class, 'login'])->name('login.post');
 Route::post('/deconnexion', [LoginController::class, 'logout'])->name('logout');
+/* ==========================================================================
+   NOUVELLES FONCTIONNALITÉS : ÉTUDIANT, ENSEIGNANT ET CHEF DE DÉPARTEMENT
+   ========================================================================== */
 
-/* --- AUTHENTIFICATION --- */
-Route::get('/connexion', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/connexion', [LoginController::class, 'login'])->name('login.post');
-Route::post('/deconnexion', [LoginController::class, 'logout'])->name('logout');
+Route::middleware(['auth'])->group(function () {
+
+    /* --- 1. FONCTIONNALITÉS ÉTUDIANT --- */
+    Route::prefix('etudiant')->name('etudiant.')->group(function () {
+
+        Route::get('/tableau_bord', function () {
+            $user = auth()->user();
+            $etudiant = $user ? $user->etudiant : null;
+            $emplois = $etudiant && $etudiant->filiere ? $etudiant->filiere->emploisDuTemps()
+                ->where('niveau_id', $etudiant->niveau_id)
+                ->orderBy('jour')->orderBy('heure_debut')->get() : [];
+            $informations = App\Models\Information::with('auteur')->whereIn('visibilite', ['public', 'etudiant'])->latest()->get();
+            return view('etudiant.tableau_bord', compact('emplois', 'etudiant', 'informations'));
+        })->name('tableau_bord');
+
+        Route::get('/profil', function () {
+            $user = auth()->user();
+            $etudiant = $user ? $user->etudiant : null;
+            return view('etudiant.profil', compact('etudiant'));
+        })->name('profil');
+
+        // COLLES UNIQUEMENT CETTE ROUTE ICI :
+        Route::put('/profil/update', function (Illuminate\Http\Request $request) {
+            $user = auth()->user();
+            $etudiant = $user ? $user->etudiant : null;
+
+            if (!$user || !$etudiant) {
+                return back()->with('error', 'Utilisateur non trouvé.');
+            }
+
+            $request->validate([
+                'username' => 'required|string|max:255|unique:users,name,' . $user->id,
+                'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+                'whatsapp' => 'required|string|max:20',
+                'password' => 'nullable|string|min:6|confirmed',
+            ]);
+
+            $user->name = $request->username;
+            $user->email = $request->email;
+            
+            if ($request->filled('password')) {
+                $user->password = Illuminate\Support\Facades\Hash::make($request->password);
+            }
+            $user->save();
+
+            $etudiant->update([
+                'telephone' => $request->whatsapp,
+            ]);
+
+            return back()->with('success', 'Votre profil a été mis à jour avec succès !');
+        })->name('profil.update');
+
+        Route::get('/notes', function () {
+            return view('etudiant.notes');
+        })->name('notes');
+
+        Route::get('/reclamations', function () {
+            return "Page des réclamations en cours de développement";
+        })->name('reclamations.index');
+
+    });
+    /* --- 2. FONCTIONNALITÉS ENSEIGNANT --- */
+    Route::prefix('enseignant')->name('enseignant.')->group(function () {
+        
+        Route::get('/profil', function () {
+            return view('enseignant.profil', ['enseignant' => auth()->user()->enseignant]);
+        })->name('profil');
+        
+        Route::put('/profil/update', function (Request $request) {
+            return back()->with('success', 'Informations personnelles mises à jour !');
+        })->name('profil.update');
+
+        Route::get('/ressources', function () {
+            return view('enseignant.ressources.index');
+        })->name('ressources.index');
+        
+        Route::post('/ressources/store', function (Request $request) {
+            return back()->with('success', 'Le document a été partagé avec succès.');
+        })->name('ressources.store');
+    });
+
+    /* --- 3. FONCTIONNALITÉS CHEF DE DÉPARTEMENT --- */
+    Route::prefix('departement')->name('departement.')->group(function () {
+        
+        // Route du tableau de bord du département
+        Route::get('/tableau_bord', function () {
+            return view('departement.tableau_bord');
+        })->name('tableau_bord');
+
+        // Route de configuration
+        Route::get('/emploi-du-temps/configuration', function () {
+            return view('departement.emploi_du_temps.config');
+        })->name('emploi_du_temps.config');
+        
+        // Route de planification
+        Route::post('/emploi-du-temps/planifier', function (Request $request) {
+            return back()->with('success', "Le cours a été planifié avec succès dans l'emploi du temps.");
+        })->name('emploi_du_temps.planifier');
+        
+    }); // Fermeture du groupe 'departement.'
+
+    // Route externe (sans le préfixe de nom 'departement.') mais TOUJOURS sous middleware 'auth'
+    Route::get('/departement/emploi-du-temps', function () {
+        return "Gestion des emplois du temps";
+    })->name('gestion.emploi_du_temps.index');
+    /* --- 5. ROUTES DE CRÉATION (ÉTUDIANT & ENSEIGNANT) --- */
+    
+    // Route POST pour enregistrer un nouvel étudiant
+    Route::post('/gestion/creer_etudiant', function (Illuminate\Http\Request $request) {
+        // C'est ici que se fera l'enregistrement de l'étudiant dans la base de données plus tard
+        return back()->with('success', "L'étudiant a été créé avec succès !");
+    })->name('gestion.creer_etudiant.store');
+
+    // Route POST pour enregistrer un nouvel enseignant
+    Route::post('/gestion/creer_enseignant', function (Illuminate\Http\Request $request) {
+        // C'est ici que se fera l'enregistrement de l'enseignant dans la base de données plus tard
+        return back()->with('success', "L'enseignant a été créé avec succès !");
+    })->name('gestion.creer_enseignant.store');
+/* --- 5. ROUTES DE CRÉATION (ÉTUDIANT, ENSEIGNANT, CHEF DE DÉPARTEMENT) --- */
+    
+    // 1. Création Étudiant
+    Route::post('/gestion/creer_etudiant', function (Request $request) {
+    // 1. Validation : On s'assure que tout est présent et valide
+    $validated = $request->validate([
+        'name'             => 'required|string|max:255',
+        'email'            => 'required|email|unique:users,email',
+        'matricule'        => 'required|string|max:50',
+        'genre'            => 'required|string|max:1',
+        'filiere'          => 'required|integer', // Doit être un ID valide en base
+        'niveau'           => 'required|integer', // Doit être un ID valide en base
+        'date_naissance'   => 'required|date',
+        'lieu_naissance'   => 'required|string|max:255',
+        'annee_academique' => 'required|string|max:20', // Ex: "2025-2026"
+    ]);
+
+    // 2. Création de l'utilisateur
+    $password = Str::random(8);
+    $user = User::create([
+        'name'     => $validated['name'],
+        'email'    => $validated['email'],
+        'password' => Hash::make($password),
+    ]);
+
+    // 3. Extraction des années à partir du champ "2025-2026"
+    // On coupe la chaîne au niveau du tiret
+    $annees = explode('-', $validated['annee_academique']);
+    $anneeDebut = ($annees[0] ?? date('Y')) . '-09-01'; // Par défaut 1er sept
+    $anneeFin   = ($annees[1] ?? (date('Y') + 1)) . '-08-31';
+
+    // 4. Création de l'étudiant
+    Etudiant::create([
+        'user_id'        => $user->id,
+        'nom_prenom'     => $validated['name'],
+        'matricule'      => $validated['matricule'],
+        'genre'          => $validated['genre'],
+        'date_naissance' => $validated['date_naissance'],
+        'lieu_naissance' => $validated['lieu_naissance'],
+        'filiere_id'     => $validated['filiere'],
+        'niveau_id'      => $validated['niveau'],
+        'annee_debut'    => $anneeDebut,
+        'annee_fin'      => $anneeFin,
+    ]);
+
+    return back()->with('success', "Étudiant créé avec succès ! Mot de passe : " . $password);
+})->name('gestion.creer_etudiant.store');
+    // 2. Création Enseignant
+    Route::post('/gestion/creer_enseignant', function (Request $request) {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'matricule' => 'required|string|unique:enseignants,matricule',
+        ]);
+        $password = Str::random(8);
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($password),
+        ]);
+        Enseignant::create([
+            'user_id' => $user->id,
+            'nom_prenom' => $validated['name'],
+            'matricule' => $validated['matricule']
+        ]);
+        return back()->with('success', "Enseignant créé ! Mot de passe : " . $password);
+    })->name('gestion.creer_enseignant.store');
+
+    // 3. Création Chef de Département
+    Route::post('/gestion/creer_departement', function (Request $request) {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+        ]);
+        $password = Str::random(8);
+        User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($password),
+            'role' => 'chef_departement',
+        ]);
+        return back()->with('success', "Chef de département créé ! Mot de passe : " . $password);
+    })->name('gestion.creer_departement.store');
+}); // <--- CETTE FERMETURE DOIT RESTER ICI TOUT EN BAS POUR LE MIDDLEWARE AUTH !
