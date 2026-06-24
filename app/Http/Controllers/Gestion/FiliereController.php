@@ -36,10 +36,8 @@ class FiliereController extends Controller
         return redirect()->route('filiere.index')->with('success', 'La filière a été modifiée avec succès.');
     }
 
-    /**
-     * Supprime une filière de la base de données.
-     */
-    public function destroy(Filiere $filiere)
+    //    Supprime une filière de la base de données.//
+        public function destroy(Filiere $filiere)
     {
         // Optionnel : Vérifier si la filière est liée à des niveaux ou étudiants avant de supprimer
         $filiere->delete();
