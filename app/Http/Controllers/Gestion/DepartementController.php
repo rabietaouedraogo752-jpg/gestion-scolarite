@@ -35,7 +35,7 @@ class DepartementController extends Controller
         return view('gestion.liste_departement', compact('departements', 'universites', 'universiteId'));
     }
 
-    public function create(Request $request)
+   public function create(Request $request)
     {
         $prefill = $request->only([
             'code',
@@ -45,61 +45,36 @@ class DepartementController extends Controller
             'ville',
         ]);
 
-        return view('gestion.creer_departement', compact('prefill'));
-    }
+        // AJOUT : Récupérer tous les départements existants pour la liste déroulante
+        $departements = \App\Models\UfrInstitut::orderBy('nom')->get();
 
+        // MODIFICATION : On ajoute 'departements' dans le compact()
+        return view('gestion.creer_departement', compact('prefill', 'departements'));
+    }
     public function store(Request $request)
-    {
-        // 1. Validation de toutes les entrées
-        $data = $request->validate([
-            'code' => 'required|string|max:50|unique:ufr_instituts,code',
-            'nom' => 'required|string|max:255',
-            'chef_nom' => 'nullable|string|max:255',
-            'code_univ' => 'required|string|max:50',
-            'nom_universite' => 'required|string|max:255',
-            'ville' => 'required|string|max:100',
-        ]);
+{
+    // 1. Validation des données du formulaire
+    $request->validate([
+        'departement_id' => 'required|exists:ufr_instituts,id', // Remplacez 'ufr_instituts' par le nom réel de votre table si différent
+        'name'           => 'required|string|max:255',
+        'email'          => 'required|email',
+    ]);
 
-        // 2. Gestion ou création de l'université
-        $universite = Universite::updateOrCreate(
-            ['code_univ' => $data['code_univ']],
-            [
-                'nom_universite' => $data['nom_universite'],
-                'ville' => $data['ville'],
-            ]
-        );
+    // 2. Récupérer le département sélectionné dans la liste déroulante
+    $departement = \App\Models\UfrInstitut::findOrFail($request->departement_id);
 
-        // 3. Génération automatique des identifiants d'accès
-    $username = strtolower(Str::slug($data['code'])) . '.chef';
-    $plainPassword = Str::random(8); // Génère le mot de passe
-        
-        $user = User::create([
-            'name' => $data['chef_nom'] ?? 'Chef ' . $data['code'],
-            'email' => $username . '@gestion-scolarite.bf', // Email généré par défaut
-            'password' => Hash::make($plainPassword),
-            'role' => 'chef_departement', // Optionnel : si vous gérez des rôles applicatifs
-        ]);
+    // 3. Sauvegarder le nom du chef dans la colonne lue par votre tableau ('chef_nom')
+    $departement->chef_nom = $request->name;
+    
+    // Si votre table possède une colonne pour l'émail du chef (optionnel) :
+    // $departement->chef_email = $request->email;
+    
+    $departement->save();
 
-        // 5. Création unique et définitive du Département (UfrInstitut)
-        UfrInstitut::create([
-            'universite_id' => $universite->id,
-            'code' => $data['code'],
-            'nom' => $data['nom'],
-            'chef_nom' => $data['chef_nom'], // Sauvegarde bien le nom du chef
-            'generated_password' => $plainPassword, // Sauvegarde du mot de passe en clair !
-            'user_id' => $user->id, // Optionnel: associe à l'user si la colonne existe
-        ]);
-
-        // 6. Redirection avec passage des variables de session flash
-        return redirect()
-            ->route('gestion.liste_departement')
-            ->with([
-                'success' => 'Département créé avec succès.',
-                'generated_username' => $username,
-                'generated_password' => $plainPassword
-            ]);
-    }
-
+    // 4. Redirection vers la liste des départements avec un message de succès
+    return redirect()->route('gestion.liste_departement')
+                     ->with('success', "Le chef de département a été assigné avec succès à la structure : {$departement->nom} !");
+}
     public function edit(UfrInstitut $departement)
     {
         return view('gestion.editer_departement', compact('departement'));
@@ -180,7 +155,6 @@ class DepartementController extends Controller
         }, 'departements_'.date('Y-m-d').'.docx');
     }
 
-    
     public function exportHtml(Request $request)
     {
         $departements = $this->departementsQuery($request->query('universite_id'))->get();
@@ -210,5 +184,58 @@ class DepartementController extends Controller
 
         return back()->with('success', 'Fichier enregistré (pas de parsing automatique pour ce type): '.$path);
     }
+    
+    public function listeFiliere(Request $request)
+    {
+        // 1. Récupération de tous les départements pour remplir le filtre de recherche
+        $departements = \App\Models\UfrInstitut::all();
+
+        // 2. On prépare la requête pour charger les filières ET leur département lié (via la clé ufr_id)
+        $query = \App\Models\Filiere::with('departement');
+
+        // 3. Gestion du filtre : si l'utilisateur choisit un département spécifique
+        if ($request->has('departement_id') && $request->departement_id != '') {
+            $query->where('ufr_id', $request->departement_id);
+        }
+
+        // 4. On exécute la requête pour obtenir la liste complète
+        $filieres = $query->get();
+
+        // 5. On envoie les variables exactes attendues par la vue HTML
+        return view('gestion.liste_filiere', compact('filieres', 'departements'));
+    }
+
+    public function destroyFiliere($id)
+    {
+        $filiere = \App\Models\Filiere::findOrFail($id);
+        $filiere->delete();
+
+        return redirect()->back()->with('success', 'La filière a été supprimée avec succès !');
+    }
+public function storeDepartementFiliere(Request $request)
+{
+    // 1. Validation des données du formulaire
+    $request->validate([
+        'departement_id' => 'required|exists:ufr_instituts,id', // Vérifie que le département sélectionné existe
+        'name'           => 'required|string|max:255',
+        'email'          => 'required|email',
+    ]);
+
+    // 2. On récupère le département sélectionné dans la liste déroulante
+    $departement = \App\Models\UfrInstitut::findOrFail($request->departement_id);
+
+    // 3. On attribue le nom saisi au champ chef_nom qui est lu par votre tableau
+    $departement->chef_nom = $request->name;
+    
+    // Si votre table possède un champ pour l'email du chef, décommentez la ligne suivante :
+    // $departement->chef_email = $request->email;
+
+    // 4. On sauvegarde les modifications
+    $departement->save();
+
+    // 5. Redirection vers la liste des départements avec le message de succès !
+    return redirect()->route('gestion.liste_departement')
+                     ->with('success', "Le chef de département " . $request->name . " a bien été assigné avec succès !");
+}
     
 }

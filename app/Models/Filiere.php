@@ -25,4 +25,9 @@ class Filiere extends Model
     {
         return $this->belongsToMany(Niveau::class, 'filiere_niveau')->withTimestamps();
     }
+    public function departement()
+    {
+        // On lie le modèle au modèle UfrInstitut en spécifiant la clé étrangère 'ufr_id'
+        return $this->belongsTo(UfrInstitut::class, 'ufr_id');
+    }
 }

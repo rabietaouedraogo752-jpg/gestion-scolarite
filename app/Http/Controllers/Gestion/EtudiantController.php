@@ -13,13 +13,7 @@ use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
 use PhpOffice\PhpWord\PhpWord;
-use PhpOffice\PhpWord\Shared\Inches;
-use Symfony\Component\HttpFoundation\StreamedResponse;
-use Illuminate\Support\Facades\Storage;
 use App\Imports\EtudiantsImport;
-use Maatwebsite\Excel\Validators\Failure;
-use Maatwebsite\Excel\HeadingRowImport;
-use Maatwebsite\Excel\Excel as ExcelType;
 
 class EtudiantController extends Controller
 {
@@ -37,7 +31,10 @@ class EtudiantController extends Controller
             'lieu_naissance',
         ]);
 
-        return view('gestion.creer_etudiant', compact('prefill'));
+        // Correction : Récupérer toutes les filières pour alimenter le select de la vue de création
+        $filieres = Filiere::orderBy('nom_filiere')->get();
+
+        return view('gestion.creer_etudiant', compact('prefill', 'filieres'));
     }
 
     public function index(Request $request)
@@ -63,109 +60,103 @@ class EtudiantController extends Controller
 
     public function edit(Etudiant $etudiant)
     {
-        return view('gestion.editer_etudiant', compact('etudiant'));
+        $filieres = Filiere::orderBy('nom_filiere')->get();
+        return view('gestion.editer_etudiant', compact('etudiant', 'filieres'));
     }
 
     public function update(Request $request, Etudiant $etudiant)
     {
+        // Correction de la validation : filiere attend désormais un ID qui existe
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,'.$etudiant->user_id,
-            'matricule' => 'required|string|max:50|unique:etudiants,matricule,'.$etudiant->id,
-            'date_naissance' => 'required|date',
-            'lieu_naissance' => 'required|string|max:150',
-            'genre' => 'required|in:M,F',
-            'filiere' => 'required|string|max:255',
-            'niveau' => 'required|string|max:255',
+            'name'             => 'required|string|max:255',
+            'email'            => 'required|email|unique:users,email,'.$etudiant->user_id,
+            'matricule'        => 'required|string|max:50|unique:etudiants,matricule,'.$etudiant->id,
+            'date_naissance'   => 'required|date',
+            'lieu_naissance'   => 'required|string|max:150',
+            'genre'            => 'required|in:M,F',
+            'filiere'          => 'required|exists:filieres,id', // <-- ID vérifié ici
+            'niveau'           => 'required|string|max:255',
             'annee_academique' => ['required', 'regex:/^\d{4}-\d{4}$/'],
         ]);
 
         $user = $etudiant->user;
         if ($user) {
             $user->update([
-                'name' => $data['name'],
+                'name'  => $data['name'],
                 'email' => $data['email'],
             ]);
         }
 
-        $filere = Filiere::firstOrCreate([
-            'nom_filiere' => $data['filiere'],
-        ]);
-
+        // Plus besoin de faire un firstOrCreate pour la filière puisqu'on reçoit un ID existant
         $niveau = Niveau::updateOrCreate(
             ['code_niveau' => $data['niveau']],
-            ['intitule' => $data['niveau']]
+            ['intitule'    => $data['niveau']]
         );
 
         [$anneeDebut, $anneeFin] = explode('-', $data['annee_academique']);
 
         $etudiant->update([
-            'nom_prenom' => $data['name'],
-            'matricule' => $data['matricule'],
+            'nom_prenom'     => $data['name'],
+            'matricule'      => $data['matricule'],
             'date_naissance' => $data['date_naissance'],
             'lieu_naissance' => $data['lieu_naissance'],
-            'genre' => $data['genre'],
-            'filiere_id' => $filere->id,
-            'niveau_id' => $niveau->id,
-            'annee_debut' => $anneeDebut.'-09-01',
-            'annee_fin' => $anneeFin.'-08-31',
+            'genre'          => $data['genre'],
+            'filiere_id'     => $data['filiere'], // <-- Enregistrement direct de l'ID reçu
+            'niveau_id'      => $niveau->id,
+            'annee_debut'    => $anneeDebut.'-09-01',
+            'annee_fin'      => $anneeFin.'-08-31',
         ]);
 
         return redirect()->route('gestion.liste_etudiant')->with('success', 'Étudiant mis à jour avec succès.');
     }
 
-   
     public function store(Request $request)
-{
-    // 1. Validation
-    $data = $request->validate([
-        'name'             => 'required|string|max:255',
-        'email'            => 'required|email|unique:users,email',
-        'matricule'        => 'required|string|max:50',
-        'genre'            => 'required|in:M,F',
-        'filiere'          => 'required|string', 
-        'niveau'           => 'required|string',
-        'annee_academique' => 'required|string',
-        'date_naissance'   => 'required|date',
-        'lieu_naissance'   => 'required|string',
-    ]);
+    {
+        // Correction de la validation : filiere attend un ID existant
+        $data = $request->validate([
+            'name'             => 'required|string|max:255',
+            'email'            => 'required|email|unique:users,email',
+            'matricule'        => 'required|string|max:50',
+            'genre'            => 'required|in:M,F',
+            'filiere'          => 'required|exists:filieres,id', // <-- ID vérifié ici
+            'niveau'           => 'required|string',
+            'annee_academique' => 'required|string',
+            'date_naissance'   => 'required|date',
+            'lieu_naissance'   => 'required|string',
+        ]);
 
-    // 2. Création de l'utilisateur
-    $password = Str::random(8);
-    $user = User::create([
-        'name'     => $data['name'],
-        'email'    => $data['email'],
-        'password' => Hash::make($password),
-    ]);
+        $password = Str::random(8);
+        $user = User::create([
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            'password' => Hash::make($password),
+        ]);
 
-    // 3. Conversion Texte vers ID (Recherche ou Création)
-    $filiere = Filiere::firstOrCreate(['nom_filiere' => $data['filiere']]);
-    $niveau  = Niveau::updateOrCreate(
-        ['code_niveau' => $data['niveau']],
-        ['intitule'    => $data['niveau']]
-    );
+        $niveau = Niveau::updateOrCreate(
+            ['code_niveau' => $data['niveau']],
+            ['intitule'    => $data['niveau']]
+        );
 
-    // 4. Traitement des années
-    $annees = explode('-', $data['annee_academique']);
-    $anneeDebut = ($annees[0] ?? date('Y')) . '-09-01';
-    $anneeFin   = ($annees[1] ?? (date('Y') + 1)) . '-08-31';
+        $annees = explode('-', $data['annee_academique']);
+        $anneeDebut = ($annees[0] ?? date('Y')) . '-09-01';
+        $anneeFin   = ($annees[1] ?? (date('Y') + 1)) . '-08-31';
 
-    // 5. Création unique de l'étudiant avec les bons ID
-    Etudiant::create([
-        'user_id'        => $user->id,
-        'nom_prenom'     => $data['name'],
-        'matricule'      => $data['matricule'],
-        'genre'          => $data['genre'],
-        'date_naissance' => $data['date_naissance'],
-        'lieu_naissance' => $data['lieu_naissance'],
-        'filiere_id'     => $filiere->id, // On utilise l'ID trouvé
-        'niveau_id'      => $niveau->id,   // On utilise l'ID trouvé
-        'annee_debut'    => $anneeDebut,
-        'annee_fin'      => $anneeFin,
-    ]);
+        Etudiant::create([
+            'user_id'        => $user->id,
+            'nom_prenom'     => $data['name'],
+            'matricule'      => $data['matricule'],
+            'genre'          => $data['genre'],
+            'date_naissance' => $data['date_naissance'],
+            'lieu_naissance' => $data['lieu_naissance'],
+            'filiere_id'     => $data['filiere'], // On associe directement l'ID
+            'niveau_id'      => $niveau->id,
+            'annee_debut'    => $anneeDebut,
+            'annee_fin'      => $anneeFin,
+        ]);
 
-    return redirect()->route('gestion.liste_etudiant')->with('success', "Étudiant créé ! Mot de passe : " . $password);
-}
+        return redirect()->route('gestion.liste_etudiant')->with('success', "Étudiant créé ! Mot de passe : " . $password);
+    }
+
     public function import(Request $request)
     {
         $request->validate([
@@ -209,14 +200,11 @@ class EtudiantController extends Controller
         $phpWord = new PhpWord();
         $section = $phpWord->addSection();
         
-        // Titre
         $section->addTitle('Liste des Étudiants', 1);
         $section->addTextBreak();
         
-        // Tableau
         $table = $section->addTable(['borderSize' => 6, 'borderColor' => '000000']);
         
-        // En-têtes
         $headerCells = $table->addRow()->getCells();
         $headerCells[0]->addText('Nom', ['bold' => true]);
         $headerCells[1]->addText('INE', ['bold' => true]);
@@ -225,7 +213,6 @@ class EtudiantController extends Controller
         $headerCells[4]->addText('Niveau', ['bold' => true]);
         $headerCells[5]->addText('Année', ['bold' => true]);
         
-        // Données
         foreach ($etudiants as $et) {
             $cells = $table->addRow()->getCells();
             $cells[0]->addText($et->user->name ?? '—');

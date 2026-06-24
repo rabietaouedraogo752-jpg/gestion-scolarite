@@ -35,19 +35,20 @@
                 <li>
                    <a href="{{ request()->fullUrlWithQuery(['tab' => 'annonces']) }}" class="nav-link {{ $activeTab === 'annonces' ? 'active' : '' }}"><i class="bi bi-megaphone me-2"></i> Annonces et Infos</a>
                 </li>
-
                 <li>
-                    <a href="{{ route('gestion.liste_etudiant') }}" class="nav-link"><i class="bi bi-people me-2"></i> Étudiants</a>
-                </li>
-                <li>
-                    <a href="{{ route('gestion.liste_enseignant') }}" class="nav-link"><i class="bi bi-person-badge me-2"></i> Enseignants</a>
+                    <a href="{{ route('gestion.liste_filiere') }}" class="nav-link"><i class="bi bi-journal-text me-2"></i> Filières (Département)</a>
                 </li>
                 <li>
                     <a href="{{ route('gestion.liste_departement') }}" class="nav-link"><i class="bi bi-building me-2"></i> Chef-Départements</a>
                 </li>
+                
                 <li>
-                    <a href="{{ route('gestion.liste_filiere') }}" class="nav-link"><i class="bi bi-journal-text me-2"></i> Filières (Département)</a>
+                    <a href="{{ route('gestion.liste_enseignant') }}" class="nav-link"><i class="bi bi-person-badge me-2"></i> Enseignants</a>
                 </li>
+                <li>
+                    <a href="{{ route('gestion.liste_etudiant') }}" class="nav-link"><i class="bi bi-people me-2"></i> Étudiants</a>
+                </li>
+                
             </ul>
             
             <div class="border-top border-secondary pt-3">

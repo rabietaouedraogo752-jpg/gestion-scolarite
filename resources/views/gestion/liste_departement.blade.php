@@ -28,17 +28,20 @@
     <div class="container">
         <div class="card table-card bg-white p-4 mb-4">
             @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             @endif
 
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <h2 class="fw-bold mb-0">Liste des départements</h2>
+                    <h2 class="fw-bold mb-0">Liste des chefs de départements</h2>
                     <p class="text-muted">Tous les départements, UFR et instituts enregistrés.</p>
                 </div>
                 <div class="d-flex gap-2">
                     <a href="{{ route('gestion.creer_departement') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i> Ajouter un département
+                        <i class="bi bi-plus-circle me-2"></i> Ajouter un chef de département
                     </a>
                     <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#importDepartmentModal">
                         <i class="bi bi-upload me-2"></i> Importer
@@ -48,11 +51,11 @@
                             <i class="bi bi-download me-2"></i> Exporter
                         </button>
                         <ul class="dropdown-menu">
-    <li><a class="dropdown-item" href="{{ route('gestion.export.departements.excel') }}">Excel</a></li>
-    <li><a class="dropdown-item" href="{{ route('gestion.export.departements.pdf') }}">PDF</a></li>
-    <li><a class="dropdown-item" href="{{ route('gestion.export.departements.word') }}">Word</a></li>
-    <li><a class="dropdown-item" href="{{ route('gestion.export.departements.html') }}">HTML</a></li>
-</ul>
+                            <li><a class="dropdown-item" href="{{ route('gestion.export.departements.excel') }}">Excel</a></li>
+                            <li><a class="dropdown-item" href="{{ route('gestion.export.departements.pdf') }}">PDF</a></li>
+                            <li><a class="dropdown-item" href="{{ route('gestion.export.departements.word') }}">Word</a></li>
+                            <li><a class="dropdown-item" href="{{ route('gestion.export.departements.html') }}">HTML</a></li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -60,7 +63,7 @@
             <form id="departmentFilters" method="GET" action="{{ route('gestion.liste_departement') }}" class="row mb-3">
                 <div class="col-md-4 mb-2">
                     <label class="form-label small text-muted">Filtrer par université</label>
-                    <select id="filterUniversite" name="universite_id" class="form-select">
+                    <select id="filterUniversite" name="universite_id" class="form-select" onchange="this.form.submit()">
                         <option value="">Toutes les universités</option>
                         @foreach($universites ?? [] as $universite)
                             <option value="{{ $universite->id }}" @selected(isset($universiteId) && (string) $universiteId === (string) $universite->id)>
@@ -75,18 +78,33 @@
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>#</th><th>Code</th><th>Nom</th><th>Chef</th><th>Accès</th><th>Université</th><th>Statut</th><th>Actions</th>
+                            <th>#</th>
+                            <th>Code</th>
+                            <th>Nom</th>
+                            <th>Chef assigné</th>
+                            <th>Accès</th>
+                            <th>Université</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($departements ?? [] as $index => $departement)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td>{{ $departement->code ?? '—' }}</td>
-                                <td>{{ $departement->nom ?? '—' }}</td>
-                                <td>{{ $departement->chef_nom ?? 'Non assigné' }}</td>
+                                <td><span class="badge bg-secondary text-wrap">{{ $departement->code ?? '—' }}</span></td>
+                                <td class="fw-bold text-secondary">{{ $departement->nom ?? '—' }}</td>
                                 <td>
-                                    <div><strong>Login:</strong> {{ strtolower(Str::slug($departement->code ?? '')) }}.chef</div>
+                                    @if(!empty($departement->chef_nom))
+                                        <span class="text-success fw-semibold">
+                                            <i class="bi bi-person-badge-fill me-1"></i> {{ $departement->chef_nom }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted italic">Non assigné</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="small"><strong>Login:</strong> <code class="text-dark">{{ strtolower(Str::slug($departement->code ?? '')) }}.chef</code></div>
                                 </td>
                                 <td>{{ $departement->universite->nom_universite ?? '—' }}</td>
                                 <td><span class="badge bg-success">Actif</span></td>
@@ -106,11 +124,11 @@
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title text-danger">Confirmer la suppression</h5>
+                                            <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmer la suppression</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body">
-                                            Voulez-vous vraiment supprimer <strong>{{ $departement->nom }}</strong> ?
+                                            Voulez-vous vraiment supprimer définitivement le département <strong>{{ $departement->nom }}</strong> ? Cette action est irréversible.
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
@@ -124,7 +142,11 @@
                                 </div>
                             </div>
                         @empty
-                            <tr><td colspan="8" class="text-center">Aucun département trouvé.</td></tr>
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">
+                                    <i class="bi bi-folder-x display-6 d-block mb-2"></i> Aucun département trouvé.
+                                </td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -136,15 +158,17 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Importer un fichier</h5>
+                    <h5 class="modal-title"><i class="bi bi-file-earmark-arrow-up me-2"></i>Importer un fichier</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form action="{{ route('gestion.import.departements') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body">
+                        <p class="small text-muted">Sélectionnez un fichier Excel/CSV contenant la liste des départements structurés.</p>
                         <input type="file" name="file" class="form-control" required>
                     </div>
                     <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
                         <button type="submit" class="btn btn-primary">Importer</button>
                     </div>
                 </form>

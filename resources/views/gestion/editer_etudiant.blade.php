@@ -45,10 +45,19 @@
             </select>
         </div>
         <div class="row">
+            
             <div class="col-md-3 mb-3">
                 <label class="form-label">Filière</label>
-                <input type="text" name="filiere" class="form-control" value="{{ old('filiere', $etudiant->filiere->nom_filiere ?? '') }}" placeholder="Entrez la filière" required>
+                <select name="filiere" class="form-select" required>
+                    <option value="">-- Sélectionner la filière --</option>
+                    @foreach($filieres ?? [] as $filiere)
+                        <option value="{{ $filiere->id }}" @selected(old('filiere', $etudiant->filiere_id) == $filiere->id)>
+                            {{ $filiere->nom_filiere }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
+
             <div class="col-md-3 mb-3">
                 <label class="form-label">Niveau</label>
                 <input type="text" name="niveau" class="form-control" value="{{ old('niveau', $etudiant->niveau->code_niveau ?? '') }}" placeholder="Entrez le niveau" required>
